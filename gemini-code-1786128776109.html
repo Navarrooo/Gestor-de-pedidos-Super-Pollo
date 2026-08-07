@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos - Super Pollo</title>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; }
+        body { background-color: #f4f4f9; height: 100vh; display: flex; flex-direction: column; }
+
+        /* Navegación */
+        nav { 
+            background: #2c3e50; 
+            color: white; 
+            display: grid; 
+            grid-template-columns: 1fr auto 1fr; 
+            align-items: center; 
+            padding: 10px 20px; 
+        }
+        .nav-title { font-size: 1.3rem; font-weight: bold; }
+        .nav-logo { display: flex; justify-content: center; align-items: center; }
+        .nav-logo img { max-height: 50px; width: auto; object-fit: contain; }
+        .nav-tabs { display: flex; gap: 10px; justify-self: end; align-items: center; }
+        .tab-btn { background: #34495e; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.05rem; touch-action: manipulation; }
+        .tab-btn.active { background: #27ae60; }
+
+        .screen { display: none; padding: 15px; height: calc(100vh - 71px); }
+        .screen.active { display: flex; }
+
+        /* POS / TOMA DE PEDIDOS */
+        #screen-pos { gap: 15px; width: 100%; }
+        .catalog { flex: 2; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding-right: 5px; }
+        .category-title { font-size: 1.25rem; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 6px; margin-top: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        
+        .btn-product {
+            background-color: #fff; border: 2px solid #e0e0e0; border-radius: 10px; padding: 14px 10px;
+            font-size: 1.05rem; font-weight: 600; color: #2c3e50; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            min-height: 95px; touch-action: manipulation;
+        }
+        .btn-product .price { font-size: 0.95rem; color: #27ae60; font-weight: bold; margin-top: 6px; }
+        .btn-product:active { transform: scale(0.96); background-color: #e8f4fd; }
+
+        /* Panel Comanda */
+        .ticket { flex: 1.1; background: #fff; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.08); }
+        .ticket-header { font-size: 1.25rem; font-weight: bold; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-clear { background: #e74c3c; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer; touch-action: manipulation; }
+        .btn-clear:active { background: #c0392b; }
+
+        .order-list { flex: 1; overflow-y: auto; list-style: none; margin-bottom: 10px; }
+        .order-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .order-item-info { flex: 1; padding-right: 10px; cursor: pointer; border-radius: 6px; padding: 6px 8px; transition: background 0.2s; }
+        .order-item-info:hover { background: #f0f4f8; }
+        .edit-hint { font-size: 0.8rem; color: #2980b9; font-weight: bold; display: inline-block; margin-top: 2px; }
+        
+        .btn-qty { background: #e0e0e0; border: none; width: 46px; height: 46px; border-radius: 8px; font-weight: bold; font-size: 1.4rem; cursor: pointer; color: #2c3e50; touch-action: manipulation; }
+        .btn-qty:active { background: #bbb; }
+
+        .customer-input, .date-select, .search-input, .date-picker { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 1.1rem; margin-bottom: 10px; background: #fff; }
+        
+        /* Selector de hora maximizado para tablets */
+        .time-select { 
+            width: 100%; 
+            height: 54px; 
+            padding: 8px 12px; 
+            border: 2px solid #2980b9; 
+            border-radius: 8px; 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            background: #fff; 
+            color: #2c3e50;
+            cursor: pointer;
+        }
+        .time-select option {
+            font-size: 1.15rem;
+            padding: 12px;
+        }
+
+        .search-input { margin-bottom: 0; border-color: #2c3e50; font-size: 1.1rem; flex: 1; padding: 14px; }
+        .search-container { width: 100%; margin-bottom: 12px; display: flex; gap: 10px; align-items: center; }
+        .date-picker { display: none; margin-bottom: 10px; }
+
+        .ticket-total { font-size: 1.35rem; font-weight: bold; color: #2c3e50; margin: 10px 0; display: flex; justify-content: space-between; border-top: 2px solid #eee; padding-top: 8px; }
+
+        .btn-submit { background-color: #27ae60; color: white; border: none; width: 100%; padding: 18px; font-size: 1.3rem; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 5px; touch-action: manipulation; }
+
+        /* Pantalla Recogida e Histórico */
+        #screen-pickup, #screen-history { width: 100%; flex-direction: column; gap: 15px; overflow-y: auto; }
+        .pickup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+        
+        .card-order { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); border-left: 8px solid #e67e22; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-order.ready { border-left-color: #27ae60; opacity: 0.85; }
+        .card-order.history { border-left-color: #7f8c8d; opacity: 0.9; }
+        
+        .card-order.delayed { border: 3px solid #e74c3c; border-left: 8px solid #e74c3c; background-color: #fdf2f2; animation: pulse-border 2s infinite; }
+        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
+
+        .card-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin-bottom: 8px; }
+        .card-time { background: #fef9e7; color: #d35400; padding: 6px 10px; border-radius: 6px; font-size: 1.05rem; font-weight: bold; }
+        .card-date { font-size: 0.9rem; color: #555; background: #eee; padding: 4px 8px; border-radius: 6px; }
+        .card-items { list-style: none; margin: 12px 0; border-top: 1px solid #eee; padding-top: 8px; }
+        .card-items li { font-size: 1.1rem; padding: 4px 0; }
+        
+        /* Botones de tarjetas aumentados */
+        .card-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+        .btn-card { flex: 1; padding: 14px 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; touch-action: manipulation; }
+        .btn-ready { background: #27ae60; color: white; }
+        .btn-edit { background: #2980b9; color: white; }
+        .btn-delete { background: #e67e22; color: white; }
+        .btn-permanent-delete { background: #c0392b; color: white; }
+        .btn-restore { background: #8e44ad; color: white; }
+        .btn-purge { background: #c0392b; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; white-space: nowrap; touch-action: manipulation; }
+        .btn-summary { background: #8e44ad; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; white-space: nowrap; touch-action: manipulation; }
+        .btn-summary:active, .btn-purge:active { opacity: 0.8; }
+
+        /* MODALES TÁCTILES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal-box { background: white; border-radius: 12px; padding: 22px; width: 92%; max-width: 520px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 90vh; display: flex; flex-direction: column; }
+        .modal-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 16px; text-align: center; color: #2c3e50; }
+        .modal-options { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+        .grid-qty { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .btn-option { background: #f8f9fa; border: 2px solid #007bff; color: #007bff; padding: 16px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; text-align: center; display: flex; justify-content: space-between; align-items: center; touch-action: manipulation; }
+        .btn-option:active { background: #007bff; color: white; }
+        .btn-secondary { background: #6c757d; border: none; color: white; padding: 16px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; margin-top: 14px; width: 100%; cursor: pointer; touch-action: manipulation; }
+
+        /* Estilos del resumen de comida */
+        .summary-section { margin-bottom: 14px; background: #f8f9fa; border-radius: 8px; padding: 12px; border: 1px solid #e9ecef; }
+        .summary-section-title { font-weight: bold; font-size: 1.1rem; color: #2c3e50; border-bottom: 2px solid #27ae60; padding-bottom: 4px; margin-bottom: 8px; }
+        .summary-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #ddd; font-size: 1.1rem; }
+        .summary-item:last-child { border-bottom: none; }
+        .summary-qty { font-weight: bold; color: #d35400; font-size: 1.15rem; }
+        .summary-total-highlight { background: #d4edda; color: #155724; font-weight: bold; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 1.15rem; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-title">Pedidos - Super Pollo</div>
+        <div class="nav-logo">
+            <img src="logo.png" alt="Super Pollo" onerror="this.style.display='none'">
+        </div>
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchScreen('pos')">Tomar Pedido</button>
+            <button class="tab-btn" onclick="switchScreen('pickup')">Recogida (<span id="pendingCount">0</span>)</button>
+            <button class="tab-btn" onclick="switchScreen('history')">Histórico</button>
+        </div>
+    </nav>
+
+    <!-- PANTALLA TOMA DE PEDIDOS -->
+    <div id="screen-pos" class="screen active">
+        <div class="catalog">
+            
+            <div class="category-title">Menús</div>
+            <div class="grid">
+                <button class="btn-product" style="border-color: #27ae60; background: #eafaf1;" onclick="triggerMenuFamiliar()">
+                    Menú Familiar
+                    <span class="price">22.00 €</span>
+                </button>
+                <button class="btn-product" style="border-color: #27ae60; background: #eafaf1;" onclick="triggerMenuIndividual()">
+                    Menú Individual
+                    <span class="price">7.40 €</span>
+                </button>
+            </div>
+
+            <div class="category-title">Pollos / Principales</div>
+            <div class="grid">
+                <button class="btn-product" onclick="selectPollo('Cuarto Pollo', 4.90)">¼ Pollo <span class="price">4.90 €</span></button>
+                <button class="btn-product" onclick="addItem('Medio Pollo', 8.00)">½ Pollo <span class="price">8.00 €</span></button>
+                <button class="btn-product" onclick="selectPollo('Pollo A\'Last', 13.90)">Pollo A'Last <span class="price">13.90 €</span></button>
+                <button class="btn-product" onclick="addItem('Lechona con Patatas', 14.90)">Lechona con Patatas <span class="price">14.90 €</span></button>
+                <button class="btn-product" onclick="addItem('Paletilla de Cordero', 29.00)">Paletilla de Cordero <span class="price">29.00 €</span></button>
+                <button class="btn-product" onclick="openFixedOptionsModal('Lasaña', [{'label':'½ Ración', 'price':4.90}, {'label':'1 Ración', 'price':8.90}])">Lasaña <span class="price">4.90 € / 8.90 €</span></button>
+                <button class="btn-product" onclick="openFixedOptionsModal('Canelones Pollo', [{'label':'3 Uds', 'price':6.50}, {'label':'6 Uds', 'price':10.50}])">Canelones Pollo <span class="price">6.50 € / 10.50 €</span></button>
+                <button class="btn-product" onclick="addItem('Canelones Espinacas', 5.90)">Canelones Espinacas <span class="price">5.90 €</span></button>
+                <button class="btn-product" onclick="openComidaModal('Fideuá', 16.00)">Fideuá <span class="price">16.00 €/kg</span></button>
+                <button class="btn-product" onclick="openPaellaModal()">Paella <span class="price">17.00 €/kg</span></button>
+                <button class="btn-product" onclick="openFixedOptionsModal('Tortilla', [{'label':'Ración', 'price':4.50}, {'label':'Entera (Pequeña)', 'price':20.00}, {'label':'Entera (Grande)', 'price':25.00}])">Tortilla <span class="price">Desde 4.50 €</span></button>
+                <button class="btn-product" onclick="openComidaModal('Albóndigas', 18.00)">Albóndigas <span class="price">18.00 €/kg</span></button>
+                <button class="btn-product" onclick="addItem('Berenjena Rellena (Unidad)', 5.90)">Berenjena Rellena <span class="price">5.90 €/ud</span></button>
+                <button class="btn-product" onclick="openFixedOptionsModal('Pollo Salsa Pimienta', [{'label':'½ Ración', 'price':5.50}, {'label':'1 Ración', 'price':8.90}])">Pollo Salsa Pimienta <span class="price">5.50 € / 8.90 €</span></button>
+                <button class="btn-product" onclick="openFixedOptionsModal('Bacalao con Tomate', [{'label':'1 Unidad', 'price':5.90}, {'label':'2 Unidades', 'price':9.90}])">Bacalao con Tomate <span class="price">5.90 € / 9.90 €</span></button>
+                <button class="btn-product" onclick="openSopasModal()">Sopas Mallorquinas <span class="price">Desde 5.00 €</span></button>
+            </div>
+
+            <div class="category-title">Acompañamientos</div>
+            <div class="grid">
+                <button class="btn-product" onclick="openComidaModal('Tumbet', 17.00)">Tumbet <span class="price">17.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Verdura Plancha', 16.00)">Verdura Plancha <span class="price">16.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Ensaladilla', 17.00)">Ensaladilla <span class="price">17.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Arroz Tres Delicias', 16.00)">Arroz Tres Delicias <span class="price">16.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Macarrones con Verduras', 16.00)">Macarrones Verduras <span class="price">16.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Macarrones con Carne', 17.00)">Macarrones Carne <span class="price">17.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Frito Mallorquín', 20.00)">Frito Mallorquín <span class="price">20.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Frito Marisco', 23.00)">Frito Marisco <span class="price">23.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Pica Pica de Pulpo', 25.00)">Pica Pica Pulpo <span class="price">25.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Sepia con Cebolla', 20.00)">Sepia con Cebolla <span class="price">20.00 €/kg</span></button>
+                <button class="btn-product" onclick="openComidaModal('Patatas Horno', 9.00)">Patatas Horno <span class="price">9.00 €/kg</span></button>
+                <button class="btn-product" style="border-color: #e67e22;" onclick="openPotatoModal()">Patatas Fritas <span class="price">Desde 4.00 €</span></button>
+            </div>
+
+            <div class="category-title">Complementos</div>
+            <div class="grid">
+                <button class="btn-product" onclick="openUnitsModal('Croquetas Pollo', 1.00, 5.50)">Croquetas Pollo <span class="price">1.00 €/u (6u: 5.50€)</span></button>
+                <button class="btn-product" onclick="openUnitsModal('Croquetas Espinacas', 1.00, 5.50)">Croquetas Espinacas <span class="price">1.00 €/u (6u: 5.50€)</span></button>
+                <button class="btn-product" onclick="openUnitsModal('Croquetas Lechona', 1.20, 6.20)">Croquetas Lechona <span class="price">1.20 €/u (6u: 6.20€)</span></button>
+                <button class="btn-product" onclick="openUnitsModal('Muslitos de Pollo', 1.00, 5.50)">Muslitos Pollo <span class="price">1.00 €/u (6u: 5.50€)</span></button>
+                <button class="btn-product" onclick="openUnitsModal('Nuggets', 0.80, 5.50)">Nuggets <span class="price">0.80 €/u (8u: 5.50€)</span></button>
+                <button class="btn-product" onclick="addItem('San Jacobo', 3.00)">San Jacobo <span class="price">3.00 €</span></button>
+                <button class="btn-product" onclick="addItem('Pechuga de Pollo', 3.20)">Pechuga de Pollo <span class="price">3.20 €</span></button>
+                <button class="btn-product" onclick="addItem('Filete de Merluza', 3.50)">Filete de Merluza <span class="price">3.50 €</span></button>
+                <button class="btn-product" onclick="openUnitsModal('Pimientos al Horno', 1.00, 3.50)">Pimientos al Horno <span class="price">1.00 €/u (4u: 3.50€)</span></button>
+            </div>
+
+            <div class="category-title">Extras</div>
+            <div class="grid">
+                <button class="btn-product" onclick="addItem('Pan Normal', 1.10)">Pan Normal <span class="price">1.10 €</span></button>
+                <button class="btn-product" onclick="addItem('Pan Rústico', 1.40)">Pan Rústico <span class="price">1.40 €</span></button>
+                <button class="btn-product" onclick="addItem('Alioli', 2.75)">Alioli <span class="price">2.75 €</span></button>
+            </div>
+
+        </div>
+
+        <div class="ticket">
+            <div class="ticket-header">
+                <span id="ticketTitle">Comanda Actual</span>
+                <button class="btn-clear" onclick="clearCurrentOrder()">🗑️ Limpiar</button>
+            </div>
+            <ul class="order-list" id="orderList"></ul>
+            
+            <div class="ticket-total">
+                <span>TOTAL:</span>
+                <span id="orderTotal">0.00 €</span>
+            </div>
+
+            <input type="text" id="customerName" class="customer-input" placeholder="Nombre cliente / N° Pedido..." autocomplete="off">
+            
+            <select id="pickupDateMode" class="date-select" onchange="toggleDatePicker()">
+                <option value="today">Para Hoy</option>
+                <option value="custom">Elegir Fecha (Calendario)...</option>
+            </select>
+
+            <input type="date" id="customDatePicker" class="date-picker" onchange="initTimeSelector()">
+
+            <select id="pickupTime" class="time-select"></select>
+
+            <button class="btn-submit" id="btnSubmitOrder" onclick="saveOrderToDB()">GUARDAR Y AGENDAR</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA RECOGIDA DE PEDIDOS -->
+    <div id="screen-pickup" class="screen">
+        <div class="search-container">
+            <input type="text" id="searchPickup" class="search-input" placeholder="🔍 Buscar cliente..." oninput="loadOrdersFromDB()">
+            <button class="btn-summary" onclick="showFoodSummaryModal()">📊 Resumen Comida</button>
+        </div>
+        <div class="pickup-grid" id="pickupGrid"></div>
+    </div>
+
+    <!-- PANTALLA HISTÓRICO DE PEDIDOS ENTREGADOS -->
+    <div id="screen-history" class="screen">
+        <div class="search-container">
+            <input type="text" id="searchHistory" class="search-input" placeholder="🔍 Buscar cliente en Histórico..." oninput="loadOrdersFromDB()">
+            <button class="btn-purge" onclick="purgeAllData()">⚠️ Borrar Todo</button>
+        </div>
+        <div class="pickup-grid" id="historyGrid"></div>
+    </div>
+
+    <!-- MODAL RESUMEN DE COMIDA CON CONTADOR POR PRIORIDAD -->
+    <div id="modalSummary" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">📊 Resumen Totales de Comida</div>
+            <div class="modal-options" id="summaryContent"></div>
+            <button class="btn-secondary" onclick="closeModals()">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- OTROS MODALES TÁCTILES -->
+    <div id="modalMenuFamiliar" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">¿Convertir en Menú Familiar? (22.00 €)</div>
+            <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 1.05rem;">Incluye: 1 Pollo + Patatas Medianas + Alioli + Salsa de pollo.</p>
+            <div class="modal-options">
+                <button class="btn-option" style="background:#27ae60; color:white; border:none;" onclick="confirmMenuFamiliar()">Sí, añadir Menú Familiar</button>
+                <button class="btn-option" onclick="confirmPolloSolo('Pollo A\'Last', 13.90)">No, solo Pollo A'Last (13.90 €)</button>
+            </div>
+            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+        </div>
+    </div>
+
+    <div id="modalMenuIndividual" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">¿Convertir en Menú Individual? (7.40 €)</div>
+            <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 1.05rem;">Incluye: Cuarto de Pollo + Patatas (Normales, Aliñadas o Mixtas).</p>
+            <div class="modal-options">
+                <button class="btn-option" style="background:#27ae60; color:white; border:none;" onclick="confirmMenuIndividual()">Sí, añadir Menú Individual</button>
+                <button class="btn-option" onclick="confirmPolloSolo('¼ Pollo', 4.90)">No, solo ¼ Pollo (4.90 €)</button>
+            </div>
+            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+        </div>
+    </div>
+
+    <div id="modalTypePatatasMenuFamiliar" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">Patatas para Menú Familiar</div>
+            <div class="modal-options">
+                <button class="btn-option" onclick="finalizeMenuFamiliar('Normales')">Patatas Medianas Normales</button>
+                <button class="btn-option" onclick="finalizeMenuFamiliar('Aliñadas')">Patatas Medianas Aliñadas</button>
+                <button class="btn-option" onclick="finalizeMenuFamiliar('Mixtas')">Patatas Medianas Mixtas</button>
+            </div>
+            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+        </div>
+    </div>
+
+    <div id="modalTypePatatasMenuIndividual" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">Patatas para Menú Individual</div>
+            <div class="modal-options">
+                <button class="btn-option" onclick="finalizeMenuIndividual('Normales')">Patatas Normales</button>
+                <button class="btn-option" onclick="finalizeMenuIndividual('Aliñadas')">Patatas Aliñadas</button>
+                <button class="btn-option" onclick="finalizeMenuIndividual('Mixtas')">Patatas Mixtas</button>
+            </div>
+            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+        </div>
+    </div>
+
+    <!-- MODAL PATATAS FRITAS -->
+    <div id="modalPatatas" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">Tamaño de Patatas Fritas</div>
+            <div class="modal-options">
+                <button class="btn-option" onclick="selectPotatoSize('Pequeña', 4.00)"><span>Pequeña (380g)</span><span>4.00 €</span></button>
+                <button class="btn-option" onclick="selectPotatoSize('Cuadrada', 4.50)"><span>Cuadrada (500g)</span><span>4.50 €</span></button>
+                <button class="btn-option" onclick="selectPotatoSize('Segunda', 5.00)"><span>Segunda (650g)</span><span>5.00 €</span></button>
+                <button class="btn-option" onclick="selectPotatoSize('Mediana', 6.00)"><span>Mediana (850g)</span><span>6.00 €</span></button>
+                <button class="btn-option" onclick="selectPotatoSize('Grande', 8.00)"><span>Grande (1500g)</span><span>8.00 €</span></button>
+            </div>
+            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+        </div>
+    </div>
+
+    <div id="modalPatatasTipo" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" id="patataTipoTitle">Tipo de Patatas</div>
+            <div class="modal-options">
+                <button class="btn-option" onclick="finalizePotato('Normales')">Normales</button>
+                <button class="btn-option" onclick="finalizePotato('Aliñadas')">Aliñadas</button>
+                <button class="btn-option" onclick="finalizePotato('Mixtas')">Mixtas</button>
+            </div>
+            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+        </div>
+    </div>
+
+    <!-- MODAL RACIONES POR PESO DE BANDEJA / PESO MANUAL -->
+    <div id="modalComida" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" id="comidaModalTitle">Selecciona el tamaño</div>
+            <div class="modal-options" id="comidaModalOptions"></div>
+            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE OPCIONES FIJAS -->
+    <div id="modalFixed" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" id="fixedModalTitle">Selecciona opción</div>
+            <div class="modal-options" id="fixedModalOptions"></div>
+            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+        </div>
+    </div>
+
+    <!-- MODAL UNIDADES -->
+    <div id="modalUnits" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" id="unitsModalTitle">Selecciona las unidades</div>
+            <div class="grid-qty" id="unitsGrid" style="margin-bottom:12px;"></div>
+            <button class="btn-option" style="width:100%; justify-content:center;" onclick="addCustomUnits()">Otra cantidad...</button>
+            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+        </div>
+    </div>
+
+    <script>
+        const TRAY_WEIGHTS = {
+            'Pequeña': 0.380,
+            'Cuadrada': 0.500,
+            'Segunda': 0.650,
+            'Mediana': 0.850,
+            'Grande': 1.500
+        };
+
+        function normalizePhonetic(text) {
+            if (!text) return "";
+            return text.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/qu/g, "k")
+                .replace(/c/g, "k")
+                .replace(/z/g, "s")
+                .replace(/s/g, "s")
+                .replace(/y/g, "i")
+                .replace(/v/g, "b")
+                .replace(/h/g, "")
+                .replace(/(.)\1+/g, "$1")
+                .trim();
+        }
+
+        /* ALGORITMO LEVENSHTEIN Y BÚSQUEDA FLEXIBLE PARA DETECTAR ERRORES EN NOMBRES */
+        function levenshteinDistance(a, b) {
+            const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+            for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+            for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+            for (let i = 1; i <= a.length; i++) {
+                for (let j = 1; j <= b.length; j++) {
+                    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j] + 1,
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j - 1] + cost
+                    );
+                }
+            }
+            return matrix[a.length][b.length];
+        }
+
+        function esCoincidenciaFlexible(nombreCliente, busqueda) {
+            if (!busqueda) return true;
+            
+            const clienteNorm = normalizePhonetic(nombreCliente);
+            const busquedaNorm = normalizePhonetic(busqueda);
+
+            if (clienteNorm.includes(busquedaNorm)) return true;
+
+            const maxErrores = busquedaNorm.length <= 4 ? 1 : 2;
+            const palabrasCliente = clienteNorm.split(' ');
+
+            return palabrasCliente.some(palabra => {
+                if (palabra.length <= 2) return palabra === busquedaNorm;
+                return levenshteinDistance(palabra, busquedaNorm) <= maxErrores;
+            });
+        }
+
+        function initDatePickerDefaults() {
+            const datePicker = document.getElementById('customDatePicker');
+            const today = new Date().toISOString().split('T')[0];
+            datePicker.value = today;
+            datePicker.min = today;
+        }
+        initDatePickerDefaults();
+
+        function toggleDatePicker() {
+            const mode = document.getElementById('pickupDateMode').value;
+            const picker = document.getElementById('customDatePicker');
+            if (mode === 'custom') {
+                picker.style.display = 'block';
+            } else {
+                picker.style.display = 'none';
+            }
+            initTimeSelector();
+        }
+
+        function initTimeSelector() {
+            const timeSelect = document.getElementById('pickupTime');
+            const mode = document.getElementById('pickupDateMode').value;
+            const previousValue = timeSelect.value;
+            timeSelect.innerHTML = '';
+            
+            let start = 8 * 60; 
+            let end = 15 * 60 + 30; 
+
+            const now = new Date();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+
+            let closestTimeMins = Math.round(currentMins / 30) * 30;
+            if (closestTimeMins < start) closestTimeMins = start;
+            if (closestTimeMins > end) closestTimeMins = end;
+
+            let closestTimeString = "";
+
+            for (let time = start; time <= end; time += 30) {
+                let hours = Math.floor(time / 60);
+                let minutes = time % 60;
+                let formattedHours = hours < 10 ? '0' + hours : hours;
+                let formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+                let timeString = `${formattedHours}:${formattedMinutes}`;
+
+                if (time === closestTimeMins) closestTimeString = timeString;
+
+                timeSelect.innerHTML += `<option value="${timeString}">🕒 Recogida: ${timeString}</option>`;
+            }
+
+            if (previousValue) {
+                timeSelect.value = previousValue;
+            } else if (mode === 'today' && closestTimeString) {
+                timeSelect.value = closestTimeString;
+            }
+        }
+        initTimeSelector();
+
+        let db;
+        const dbReq = indexedDB.open("AsadorDB", 1);
+        dbReq.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains("orders")) {
+                db.createObjectStore("orders", { keyPath: "id", autoIncrement: true });
+            }
+        };
+        dbReq.onsuccess = (e) => { db = e.target.result; loadOrdersFromDB(); };
+
+        let currentOrder = [];
+        let selectedComidaItem = '';
+        let selectedComidaPricePerKg = 0;
+        let selectedUnitsType = '';
+        let selectedUnitPrice = 0;
+        let selectedPackPrice = 0;
+        let selectedPotatoSizeTemp = '';
+        let selectedPotatoPriceTemp = 0;
+        let editingOrderId = null;
+
+        function closeModals() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        }
+
+        function clearCurrentOrder() {
+            if (currentOrder.length === 0 && !editingOrderId) return;
+            if (confirm("¿Seguro que quieres borrar todos los productos de esta comanda?")) {
+                currentOrder = [];
+                editingOrderId = null;
+                document.getElementById('ticketTitle').innerText = "Comanda Actual";
+                document.getElementById('btnSubmitOrder').innerText = "GUARDAR Y AGENDAR";
+                document.getElementById('customerName').value = '';
+                renderOrder();
+            }
+        }
+
+        function purgeAllData() {
+            if (confirm("⚠️ ¿ATENCIÓN: Quieres borrar TODOS los pedidos (Recogida e Histórico)?")) {
+                if (confirm("Esta acción eliminará completamente la base de datos de pedidos y no se podrá deshacer. ¿Continuar?")) {
+                    const tx = db.transaction("orders", "readwrite");
+                    const store = tx.objectStore("orders");
+                    store.clear();
+                    tx.oncomplete = () => {
+                        currentOrder = [];
+                        editingOrderId = null;
+                        document.getElementById('ticketTitle').innerText = "Comanda Actual";
+                        document.getElementById('btnSubmitOrder').innerText = "GUARDAR Y AGENDAR";
+                        document.getElementById('customerName').value = '';
+                        renderOrder();
+                        loadOrdersFromDB();
+                        alert("Todos los pedidos han sido eliminados correctamente.");
+                    };
+                }
+            }
+        }
+
+        function selectPollo(type, price) {
+            if (type === 'Pollo A\'Last') {
+                document.getElementById('modalMenuFamiliar').classList.add('active');
+            } else if (type === '¼ Pollo') {
+                document.getElementById('modalMenuIndividual').classList.add('active');
+            } else {
+                addItem(type, price);
+            }
+        }
+
+        function confirmPolloSolo(type, price) {
+            closeModals();
+            addItem(type, price);
+        }
+
+        function confirmMenuFamiliar() {
+            closeModals();
+            document.getElementById('modalTypePatatasMenuFamiliar').classList.add('active');
+        }
+
+        function triggerMenuFamiliar() {
+            document.getElementById('modalTypePatatasMenuFamiliar').classList.add('active');
+        }
+
+        function finalizeMenuFamiliar(potatoType) {
+            closeModals();
+            addItem(`MENÚ FAMILIAR (Pollo + Patatas M. ${potatoType} + Alioli + Salsa)`, 22.00);
+        }
+
+        function confirmMenuIndividual() {
+            closeModals();
+            document.getElementById('modalTypePatatasMenuIndividual').classList.add('active');
+        }
+
+        function triggerMenuIndividual() {
+            document.getElementById('modalTypePatatasMenuIndividual').classList.add('active');
+        }
+
+        function finalizeMenuIndividual(potatoType) {
+            closeModals();
+            addItem(`MENÚ INDIVIDUAL (¼ Pollo + Patatas ${potatoType})`, 7.40);
+        }
+
+        function openPotatoModal() {
+            document.getElementById('modalPatatas').classList.add('active');
+        }
+
+        function selectPotatoSize(size, price) {
+            selectedPotatoSizeTemp = size;
+            selectedPotatoPriceTemp = price;
+            closeModals();
+            document.getElementById('patataTipoTitle').innerText = `Patatas ${size} - Tipo`;
+            document.getElementById('modalPatatasTipo').classList.add('active');
+        }
+
+        function finalizePotato(type) {
+            closeModals();
+            addItem(`Patatas Fritas ${selectedPotatoSizeTemp} (${type})`, selectedPotatoPriceTemp);
+        }
+
+        function openComidaModal(itemName, pricePerKg) {
+            selectedComidaItem = itemName;
+            selectedComidaPricePerKg = pricePerKg;
+            document.getElementById('comidaModalTitle').innerText = `${itemName} (${pricePerKg.toFixed(2)} €/kg)`;
+            
+            const optionsContainer = document.getElementById('comidaModalOptions');
+            optionsContainer.innerHTML = '';
+
+            const customWeightBtn = document.createElement('button');
+            customWeightBtn.className = 'btn-option';
+            customWeightBtn.style.borderColor = '#27ae60';
+            customWeightBtn.style.color = '#27ae60';
+            customWeightBtn.style.background = '#eafaf1';
+            customWeightBtn.innerHTML = `<span>⚖️ Introducir gramos exactos...</span><span>Entrada manual</span>`;
+            customWeightBtn.onclick = () => {
+                const gramsInput = prompt(`Introduce el peso exacto en GRAMOS para ${selectedComidaItem}:`, "500");
+                const grams = parseInt(gramsInput);
+                if (!isNaN(grams) && grams > 0) {
+                    const price = Math.round((grams / 1000) * selectedComidaPricePerKg * 100) / 100;
+                    closeModals();
+                    addItem(`${selectedComidaItem} (${grams}g)`, price, pricePerKg);
+                }
+            };
+            optionsContainer.appendChild(customWeightBtn);
+
+            Object.keys(TRAY_WEIGHTS).forEach(size => {
+                const weight = TRAY_WEIGHTS[size];
+                const calculatedPrice = Math.round(weight * pricePerKg * 100) / 100;
+
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerHTML = `<span>Bandeja ${size} (${weight * 1000}g)</span><span>${calculatedPrice.toFixed(2)} €</span>`;
+                btn.onclick = () => {
+                    closeModals();
+                    addItem(`${selectedComidaItem} (${size} - ${weight * 1000}g)`, calculatedPrice, pricePerKg);
+                };
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('modalComida').classList.add('active');
+        }
+
+        function openSopasModal() {
+            const sopasPrices = { 'Pequeña': 5.00, 'Cuadrada': 6.00, 'Segunda': 8.50, 'Mediana': 14.00, 'Grande': 17.00 };
+            document.getElementById('fixedModalTitle').innerText = "Sopas Mallorquinas";
+            const container = document.getElementById('fixedModalOptions');
+            container.innerHTML = '';
+
+            Object.keys(sopasPrices).forEach(size => {
+                const price = sopasPrices[size];
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerHTML = `<span>Bandeja ${size}</span><span>${price.toFixed(2)} €</span>`;
+                btn.onclick = () => {
+                    closeModals();
+                    addItem(`Sopas Mallorquinas (${size})`, price);
+                };
+                container.appendChild(btn);
+            });
+            document.getElementById('modalFixed').classList.add('active');
+        }
+
+        function openPaellaModal() {
+            document.getElementById('fixedModalTitle').innerText = "Paella";
+            const container = document.getElementById('fixedModalOptions');
+            container.innerHTML = '';
+
+            const btnEncargo = document.createElement('button');
+            btnEncargo.className = 'btn-option';
+            btnEncargo.innerHTML = `<span>Por Encargo (Mín. 4 Pax)</span><span>12.90 €/p.p</span>`;
+            btnEncargo.onclick = () => {
+                const pax = parseInt(prompt("Número de personas para la Paella (Mínimo 4):", "4"));
+                if (!isNaN(pax) && pax >= 4) {
+                    closeModals();
+                    addItem(`Paella Por Encargo (${pax} pax)`, pax * 12.90);
+                }
+            };
+            container.appendChild(btnEncargo);
+
+            const customWeightBtn = document.createElement('button');
+            customWeightBtn.className = 'btn-option';
+            customWeightBtn.style.borderColor = '#27ae60';
+            customWeightBtn.style.color = '#27ae60';
+            customWeightBtn.style.background = '#eafaf1';
+            customWeightBtn.innerHTML = `<span>⚖️ Paella por Gramos Exactos...</span><span>17.00 €/kg</span>`;
+            customWeightBtn.onclick = () => {
+                const gramsInput = prompt("Introduce el peso en GRAMOS para la Paella:", "500");
+                const grams = parseInt(gramsInput);
+                if (!isNaN(grams) && grams > 0) {
+                    const price = Math.round((grams / 1000) * 17.00 * 100) / 100;
+                    closeModals();
+                    addItem(`Paella Al Peso (${grams}g)`, price, 17.00);
+                }
+            };
+            container.appendChild(customWeightBtn);
+
+            Object.keys(TRAY_WEIGHTS).forEach(size => {
+                const weight = TRAY_WEIGHTS[size];
+                const price = Math.round(weight * 17.00 * 100) / 100;
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerHTML = `<span>Bandeja ${size} (${weight * 1000}g)</span><span>${price.toFixed(2)} €</span>`;
+                btn.onclick = () => {
+                    closeModals();
+                    addItem(`Paella Al Peso (${size})`, price, 17.00);
+                };
+                container.appendChild(btn);
+            });
+
+            document.getElementById('modalFixed').classList.add('active');
+        }
+
+        function openFixedOptionsModal(title, options) {
+            document.getElementById('fixedModalTitle').innerText = title;
+            const container = document.getElementById('fixedModalOptions');
+            container.innerHTML = '';
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerHTML = `<span>${opt.label}</span><span>${opt.price.toFixed(2)} €</span>`;
+                btn.onclick = () => {
+                    closeModals();
+                    addItem(`${title} (${opt.label})`, opt.price);
+                };
+                container.appendChild(btn);
+            });
+
+            document.getElementById('modalFixed').classList.add('active');
+        }
+
+        function openUnitsModal(productName, unitPrice, packPrice) {
+            selectedUnitsType = productName;
+            selectedUnitPrice = unitPrice;
+            selectedPackPrice = packPrice;
+
+            document.getElementById('unitsModalTitle').innerText = `${productName}`;
+            const grid = document.getElementById('unitsGrid');
+            grid.innerHTML = '';
+
+            const quantities = [1, 2, 3, 4, 6, 12];
+            quantities.forEach(num => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.style.justifyContent = 'center';
+                let price = (num === 6 && packPrice) ? packPrice : (num * unitPrice);
+                btn.innerText = `${num} ud (${price.toFixed(2)}€)`;
+                btn.onclick = () => selectUnits(num);
+                grid.appendChild(btn);
+            });
+
+            document.getElementById('modalUnits').classList.add('active');
+        }
+
+        function selectUnits(units) {
+            closeModals();
+            let price = (units === 6 && selectedPackPrice) ? selectedPackPrice : (units * selectedUnitPrice);
+            addItem(`${selectedUnitsType} (${units} ud${units > 1 ? 's' : ''})`, price);
+        }
+
+        function addCustomUnits() {
+            const input = prompt(`Introduce el número de unidades de ${selectedUnitsType}:`);
+            const units = parseInt(input);
+            if (!isNaN(units) && units > 0) {
+                closeModals();
+                let price = (units === 6 && selectedPackPrice) ? selectedPackPrice : (units * selectedUnitPrice);
+                addItem(`${selectedUnitsType} (${units} ud${units > 1 ? 's' : ''})`, price);
+            }
+        }
+
+        function addItem(name, price, pricePerKg = null) {
+            const existing = currentOrder.find(item => item.name === name);
+            if (existing) { 
+                existing.qty++; 
+            } else { 
+                currentOrder.push({ name, price, pricePerKg, qty: 1 }); 
+            }
+            renderOrder();
+        }
+
+        function updateQty(name, delta) {
+            const item = currentOrder.find(i => i.name === name);
+            if (item) {
+                item.qty += delta;
+                if (item.qty <= 0) { currentOrder = currentOrder.filter(i => i.name !== name); }
+            }
+            renderOrder();
+        }
+
+        function editItemInList(index) {
+            const item = currentOrder[index];
+            if (!item) return;
+
+            let pricePerKg = item.pricePerKg;
+
+            if (!pricePerKg) {
+                const askedPricePerKg = prompt(`Introduce el precio por kilo (€/kg) para "${item.name}":`, "17.00");
+                if (askedPricePerKg === null) return;
+                pricePerKg = parseFloat(askedPricePerKg.replace(',', '.'));
+            }
+
+            if (isNaN(pricePerKg) || pricePerKg <= 0) return alert("Precio por kg no válido.");
+
+            let initialGrams = "";
+            const matchGrams = item.name.match(/(\d+)\s*g/i);
+            if (matchGrams) initialGrams = matchGrams[1];
+
+            const gramsInput = prompt(`Introduce el NUEVO PESO en GRAMOS para "${item.name}" (${pricePerKg.toFixed(2)} €/kg):`, initialGrams || "500");
+            
+            if (gramsInput !== null) {
+                const newGrams = parseInt(gramsInput);
+                if (!isNaN(newGrams) && newGrams > 0) {
+                    const calculatedPrice = Math.round((newGrams / 1000) * pricePerKg * 100) / 100;
+                    
+                    item.price = calculatedPrice;
+                    item.pricePerKg = pricePerKg;
+
+                    let baseName = item.name.replace(/\s*\(\d+\s*g\)/i, '').replace(/\s*\([^)]*\)/i, '').trim();
+                    item.name = `${baseName} (${newGrams}g)`;
+                    
+                    renderOrder();
+                }
+            }
+        }
+
+        function renderOrder() {
+            const listEl = document.getElementById('orderList');
+            listEl.innerHTML = '';
+
+            let total = 0;
+
+            currentOrder.forEach((item, index) => {
+                const subtotal = item.price * item.qty;
+                total += subtotal;
+
+                const li = document.createElement('li');
+                li.className = 'order-item';
+                li.innerHTML = `
+                    <div class="order-item-info" onclick="editItemInList(${index})">
+                        <strong style="font-size:1.05rem; color:#2c3e50;">${item.name}</strong>
+                        <div style="font-size:0.9rem; color:#666;">${item.price.toFixed(2)} € x ${item.qty} = ${subtotal.toFixed(2)} €</div>
+                        <span class="edit-hint">⚖️ Toca para recalcular peso/importe</span>
+                    </div>
+                    <div style="white-space:nowrap; display:flex; align-items:center; gap:8px;">
+                        <button class="btn-qty" onclick="updateQty('${item.name.replace(/'/g, "\\'")}', -1)">-</button>
+                        <span style="font-weight:bold; font-size:1.2rem; min-width:24px; text-align:center;">${item.qty}</span>
+                        <button class="btn-qty" onclick="updateQty('${item.name.replace(/'/g, "\\'")}', 1)">+</button>
+                    </div>`;
+                listEl.appendChild(li);
+            });
+
+            document.getElementById('orderTotal').innerText = `${total.toFixed(2)} €`;
+        }
+
+        function saveOrderToDB() {
+            const nameInput = document.getElementById('customerName').value.trim();
+            const timeInput = document.getElementById('pickupTime').value;
+            const dateMode = document.getElementById('pickupDateMode').value;
+            const customDate = document.getElementById('customDatePicker').value;
+
+            if (currentOrder.length === 0) return alert("Añade al menos un producto.");
+            if (!nameInput) return alert("Introduce el nombre del cliente o un identificador.");
+
+            let formattedDate = new Date().toISOString().split('T')[0];
+            if (dateMode === 'custom' && customDate) {
+                formattedDate = customDate;
+            }
+
+            const totalPrice = currentOrder.reduce((sum, i) => sum + (i.price * i.qty), 0);
+
+            const orderData = {
+                customer: nameInput,
+                pickupDate: formattedDate,
+                pickupTime: timeInput,
+                items: currentOrder,
+                totalPrice: totalPrice,
+                status: 'pending'
+            };
+
+            const tx = db.transaction("orders", "readwrite");
+            const store = tx.objectStore("orders");
+
+            if (editingOrderId) {
+                orderData.id = editingOrderId;
+                store.put(orderData);
+            } else {
+                store.add(orderData);
+            }
+
+            tx.oncomplete = () => {
+                currentOrder = [];
+                editingOrderId = null;
+                document.getElementById('ticketTitle').innerText = "Comanda Actual";
+                document.getElementById('btnSubmitOrder').innerText = "GUARDAR Y AGENDAR";
+                document.getElementById('customerName').value = '';
+                document.getElementById('pickupDateMode').value = 'today';
+                toggleDatePicker();
+                renderOrder();
+                loadOrdersFromDB();
+                switchScreen('pickup');
+            };
+        }
+
+        function editOrder(id) {
+            const tx = db.transaction("orders", "readonly");
+            const req = tx.objectStore("orders").get(id);
+
+            req.onsuccess = () => {
+                const order = req.result;
+                if (!order) return;
+
+                editingOrderId = order.id;
+                currentOrder = order.items;
+                document.getElementById('customerName').value = order.customer;
+
+                const todayStr = new Date().toISOString().split('T')[0];
+                if (order.pickupDate === todayStr) {
+                    document.getElementById('pickupDateMode').value = 'today';
+                } else {
+                    document.getElementById('pickupDateMode').value = 'custom';
+                    document.getElementById('customDatePicker').value = order.pickupDate;
+                }
+                toggleDatePicker();
+
+                document.getElementById('pickupTime').value = order.pickupTime;
+                document.getElementById('ticketTitle').innerText = `Editando Pedido #${order.id}`;
+                document.getElementById('btnSubmitOrder').innerText = "GUARDAR CAMBIOS";
+
+                renderOrder();
+                switchScreen('pos');
+            };
+        }
+
+        function markAsDelivered(id) {
+            const tx = db.transaction("orders", "readwrite");
+            const store = tx.objectStore("orders");
+            const req = store.get(id);
+            req.onsuccess = () => {
+                const data = req.result;
+                data.status = 'delivered';
+                store.put(data);
+            };
+            tx.oncomplete = () => loadOrdersFromDB();
+        }
+
+        function deleteHistoryOrder(id) {
+            if (confirm("¿Seguro que deseas eliminar definitivamente este pedido del histórico?")) {
+                const tx = db.transaction("orders", "readwrite");
+                const store = tx.objectStore("orders");
+                store.delete(id);
+                tx.oncomplete = () => loadOrdersFromDB();
+            }
+        }
+
+        function restoreOrder(id) {
+            const tx = db.transaction("orders", "readwrite");
+            const store = tx.objectStore("orders");
+            const req = store.get(id);
+            req.onsuccess = () => {
+                const data = req.result;
+                data.status = 'pending';
+                store.put(data);
+            };
+            tx.oncomplete = () => loadOrdersFromDB();
+        }
+
+        function loadOrdersFromDB() {
+            if (!db) return;
+            const tx = db.transaction("orders", "readonly");
+            const req = tx.objectStore("orders").getAll();
+
+            const searchPickupRaw = document.getElementById('searchPickup').value;
+            const searchHistoryRaw = document.getElementById('searchHistory').value;
+
+            req.onsuccess = () => {
+                const orders = req.result;
+                
+                orders.sort((a, b) => {
+                    if (a.pickupDate !== b.pickupDate) {
+                        return a.pickupDate.localeCompare(b.pickupDate);
+                    }
+                    return a.pickupTime.localeCompare(b.pickupTime);
+                });
+                
+                const pickupGrid = document.getElementById('pickupGrid');
+                const historyGrid = document.getElementById('historyGrid');
+                pickupGrid.innerHTML = '';
+                historyGrid.innerHTML = '';
+
+                let pendingCounter = 0;
+
+                const now = new Date();
+                const todayStr = now.toISOString().split('T')[0];
+                const tomorrow = new Date();
+                tomorrow.setDate(now.getDate() + 1);
+                const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+                orders.forEach(order => {
+                    let dynamicDateLabel = order.pickupDate;
+                    if (order.pickupDate === todayStr) {
+                        dynamicDateLabel = 'HOY';
+                    } else if (order.pickupDate === tomorrowStr) {
+                        dynamicDateLabel = 'MAÑANA';
+                    }
+
+                    let itemsHtml = order.items.map(i => `<li><strong>${i.qty}x</strong> ${i.name} (${(i.price * i.qty).toFixed(2)}€)</li>`).join('');
+                    let totalFormatted = order.totalPrice ? `${order.totalPrice.toFixed(2)} €` : 'N/D';
+
+                    if (order.status === 'delivered') {
+                        if (esCoincidenciaFlexible(order.customer, searchHistoryRaw)) {
+                            const card = document.createElement('div');
+                            card.className = 'card-order history';
+                            card.innerHTML = `
+                                <div>
+                                    <div class="card-header">
+                                        <span>${order.customer}</span>
+                                        <span class="card-date">${dynamicDateLabel}</span>
+                                    </div>
+                                    <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
+                                        <span class="card-time">🕒 ${order.pickupTime}</span>
+                                        <strong style="color:#27ae60;">${totalFormatted}</strong>
+                                    </div>
+                                    <ul class="card-items">${itemsHtml}</ul>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn-card btn-restore" onclick="restoreOrder(${order.id})">Recuperar a Recogida</button>
+                                    <button class="btn-card btn-permanent-delete" onclick="deleteHistoryOrder(${order.id})">🗑️ Eliminar</button>
+                                </div>
+                            `;
+                            historyGrid.appendChild(card);
+                        }
+
+                    } else {
+                        if (order.status === 'pending') pendingCounter++;
+
+                        if (esCoincidenciaFlexible(order.customer, searchPickupRaw)) {
+                            let isDelayed = false;
+                            if (order.status === 'pending' && order.pickupDate === todayStr) {
+                                const [pHours, pMins] = order.pickupTime.split(':').map(Number);
+                                const orderPickupMinutes = pHours * 60 + pMins;
+                                if (currentMinutes - orderPickupMinutes >= 30) isDelayed = true;
+                            }
+
+                            const card = document.createElement('div');
+                            card.className = `card-order ${order.status === 'completed' ? 'ready' : ''} ${isDelayed ? 'delayed' : ''}`;
+
+                            card.innerHTML = `
+                                <div>
+                                    <div class="card-header">
+                                        <span>${order.customer}</span>
+                                        <span class="card-date">${dynamicDateLabel}</span>
+                                    </div>
+                                    <div style="margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
+                                        <span class="card-time">🕒 ${order.pickupTime}</span>
+                                        <strong style="color:#27ae60; font-size:1.1rem;">${totalFormatted}</strong>
+                                    </div>
+                                    ${isDelayed ? '<div style="color:#e74c3c; font-weight:bold; font-size:0.9rem; margin-bottom:6px;">⚠️ RECOGIDA RETRASADA (+30m)</div>' : ''}
+                                    <ul class="card-items">${itemsHtml}</ul>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn-card btn-ready" onclick="toggleOrderStatus(${order.id}, '${order.status}')">
+                                        ${order.status === 'pending' ? 'Marcar Listo' : 'Reabrir'}
+                                    </button>
+                                    <button class="btn-card btn-edit" onclick="editOrder(${order.id})">✏️ Editar</button>
+                                    <button class="btn-card btn-delete" onclick="markAsDelivered(${order.id})">Entregado</button>
+                                </div>
+                            `;
+                            pickupGrid.appendChild(card);
+                        }
+                    }
+                });
+
+                document.getElementById('pendingCount').innerText = pendingCounter;
+            };
+        }
+
+        /* RESUMEN DE COMIDA CON DESGROSE DE POLLOS ENTEROS, MEDIOS, CUARTOS Y TOTAL ACUMULADO */
+        function showFoodSummaryModal() {
+            if (!db) return;
+            const tx = db.transaction("orders", "readonly");
+            const req = tx.objectStore("orders").getAll();
+
+            req.onsuccess = () => {
+                const orders = req.result.filter(o => o.status !== 'delivered');
+                
+                // Contadores de Pollos
+                let pollosEnteros = 0;
+                let mediosPollo = 0;
+                let cuartosPollo = 0;
+
+                let panNormal = 0;
+                let panRustico = 0;
+
+                let lechonaRaciones = 0;
+                
+                const paellaData = { paxEncargo: 0, totalGramos: 0, bandejas: {} };
+                const fideuaData = { totalGramos: 0, bandejas: {} };
+
+                const restFood = {};
+
+                orders.forEach(order => {
+                    order.items.forEach(item => {
+                        const nameLower = item.name.toLowerCase();
+                        const qty = item.qty;
+
+                        // 1. Pollos (Enteros, Medios, Cuartos)
+                        if (nameLower.includes("menú familiar") || nameLower.includes("menu familiar")) {
+                            pollosEnteros += qty;
+                        } else if (nameLower.includes("menú individual") || nameLower.includes("menu individual")) {
+                            cuartosPollo += qty;
+                        } else if (nameLower.includes("pollo a'last") || nameLower.includes("pollo alast")) {
+                            pollosEnteros += qty;
+                        } else if (nameLower.includes("medio pollo") || nameLower.includes("½ pollo")) {
+                            mediosPollo += qty;
+                        } else if (nameLower.includes("¼ pollo") || nameLower.includes("cuarto pollo")) {
+                            cuartosPollo += qty;
+                        } 
+                        // 2. Panes
+                        else if (nameLower.includes("pan normal")) {
+                            panNormal += qty;
+                        } else if (nameLower.includes("pan rústico") || nameLower.includes("pan rustico")) {
+                            panRustico += qty;
+                        } 
+                        // 3. Lechona
+                        else if (nameLower.includes("lechona")) {
+                            lechonaRaciones += qty;
+                        }
+                        // 4. Paella
+                        else if (nameLower.includes("paella")) {
+                            const encargoMatch = item.name.match(/por encargo\s*\((\d+)\s*pax\)/i);
+                            const gramsMatch = item.name.match(/(\d+)\s*g/i);
+
+                            if (encargoMatch) {
+                                paellaData.paxEncargo += parseInt(encargoMatch[1]) * qty;
+                            } else if (gramsMatch) {
+                                paellaData.totalGramos += parseInt(gramsMatch[1]) * qty;
+                            } else {
+                                if (!paellaData.bandejas[item.name]) paellaData.bandejas[item.name] = 0;
+                                paellaData.bandejas[item.name] += qty;
+                            }
+                        }
+                        // 5. Fideuá
+                        else if (nameLower.includes("fideuá") || nameLower.includes("fideua")) {
+                            const gramsMatch = item.name.match(/(\d+)\s*g/i);
+                            if (gramsMatch) {
+                                fideuaData.totalGramos += parseInt(gramsMatch[1]) * qty;
+                            } else {
+                                if (!fideuaData.bandejas[item.name]) fideuaData.bandejas[item.name] = 0;
+                                fideuaData.bandejas[item.name] += qty;
+                            }
+                        }
+                        // 6. Resto de comidas
+                        else {
+                            if (!restFood[item.name]) {
+                                restFood[item.name] = 0;
+                            }
+                            restFood[item.name] += qty;
+                        }
+                    });
+                });
+
+                // Cálculo total global equivalente de pollos (1 + 0.5 + 0.25)
+                const totalPollosEquivalentes = pollosEnteros + (mediosPollo * 0.5) + (cuartosPollo * 0.25);
+
+                function getBaseName(fullName) {
+                    return fullName.split('(')[0].trim().toLowerCase();
+                }
+
+                const sortedRest = Object.keys(restFood)
+                    .map(key => ({ name: key, qty: restFood[key], baseName: getBaseName(key) }))
+                    .sort((a, b) => {
+                        if (a.baseName < b.baseName) return -1;
+                        if (a.baseName > b.baseName) return 1;
+                        return b.qty - a.qty;
+                    });
+
+                const container = document.getElementById('summaryContent');
+                container.innerHTML = '';
+
+                // Bloque 1: Pollos con desglose completo y total equivalente
+                container.innerHTML += `
+                    <div class="summary-section">
+                        <div class="summary-section-title">🍗 POLLOS TOTALES</div>
+                        <div class="summary-item"><span>Pollos Enteros (1):</span><span class="summary-qty">${pollosEnteros} ud</span></div>
+                        <div class="summary-item"><span>Medios Pollos (½):</span><span class="summary-qty">${mediosPollo} ud</span></div>
+                        <div class="summary-item"><span>Cuartos de Pollo (¼):</span><span class="summary-qty">${cuartosPollo} ud</span></div>
+                        <div class="summary-item summary-total-highlight">
+                            <span>TOTAL POLLOS (Sumando todo):</span>
+                            <span>${totalPollosEquivalentes} pollos</span>
+                        </div>
+                    </div>`;
+
+                // Bloque 2: Lechona
+                container.innerHTML += `
+                    <div class="summary-section">
+                        <div class="summary-section-title">🐖 LECHONA</div>
+                        <div class="summary-item"><span>Raciones / Unidades:</span><span class="summary-qty">${lechonaRaciones} ud</span></div>
+                    </div>`;
+
+                // Bloque 3: Paella
+                let paellaHtml = `<div class="summary-section"><div class="summary-section-title">🥘 PAELLA</div>`;
+                let paellaHasData = false;
+                if (paellaData.paxEncargo > 0) {
+                    paellaHtml += `<div class="summary-item"><span>Por Encargo Total:</span><span class="summary-qty">${paellaData.paxEncargo} Personas (Pax)</span></div>`;
+                    paellaHasData = true;
+                }
+                if (paellaData.totalGramos > 0) {
+                    paellaHtml += `<div class="summary-item"><span>Al Peso Total:</span><span class="summary-qty">${(paellaData.totalGramos / 1000).toFixed(2)} kg (${paellaData.totalGramos}g)</span></div>`;
+                    paellaHasData = true;
+                }
+                Object.keys(paellaData.bandejas).forEach(bName => {
+                    paellaHtml += `<div class="summary-item"><span>${bName}:</span><span class="summary-qty">${paellaData.bandejas[bName]} ud</span></div>`;
+                    paellaHasData = true;
+                });
+                if (!paellaHasData) paellaHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:3px;">Sin encargos.</div>`;
+                paellaHtml += `</div>`;
+                container.innerHTML += paellaHtml;
+
+                // Bloque 4: Fideuá
+                let fideuaHtml = `<div class="summary-section"><div class="summary-section-title">🍲 FIDEUÁ</div>`;
+                let fideuaHasData = false;
+                if (fideuaData.totalGramos > 0) {
+                    fideuaHtml += `<div class="summary-item"><span>Al Peso Total:</span><span class="summary-qty">${(fideuaData.totalGramos / 1000).toFixed(2)} kg (${fideuaData.totalGramos}g)</span></div>`;
+                    fideuaHasData = true;
+                }
+                Object.keys(fideuaData.bandejas).forEach(bName => {
+                    fideuaHtml += `<div class="summary-item"><span>${bName}:</span><span class="summary-qty">${fideuaData.bandejas[bName]} ud</span></div>`;
+                    fideuaHasData = true;
+                });
+                if (!fideuaHasData) fideuaHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:3px;">Sin encargos.</div>`;
+                fideuaHtml += `</div>`;
+                container.innerHTML += fideuaHtml;
+
+                // Bloque 5: Panes
+                container.innerHTML += `
+                    <div class="summary-section">
+                        <div class="summary-section-title">🥖 PANES</div>
+                        <div class="summary-item"><span>Pan Normal:</span><span class="summary-qty">${panNormal} ud</span></div>
+                        <div class="summary-item"><span>Pan Rústico:</span><span class="summary-qty">${panRustico} ud</span></div>
+                    </div>`;
+
+                // Bloque 6: Otras comidas agrupadas
+                let restHtml = `<div class="summary-section"><div class="summary-section-title">📋 OTRAS COMIDAS (Agrupadas por tipo)</div>`;
+                if (sortedRest.length === 0) {
+                    restHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:5px;">No hay otros platos registrados.</div>`;
+                } else {
+                    sortedRest.forEach(item => {
+                        restHtml += `
+                            <div class="summary-item">
+                                <span>${item.name}</span>
+                                <span class="summary-qty">${item.qty}</span>
+                            </div>
+                        `;
+                    });
+                }
+                restHtml += `</div>`;
+                container.innerHTML += restHtml;
+
+                document.getElementById('modalSummary').classList.add('active');
+            };
+        }
+
+        function toggleOrderStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
+            const tx = db.transaction("orders", "readwrite");
+            const store = tx.objectStore("orders");
+            const req = store.get(id);
+            req.onsuccess = () => {
+                const data = req.result;
+                data.status = newStatus;
+                store.put(data);
+            };
+            tx.oncomplete = () => loadOrdersFromDB();
+        }
+
+        function switchScreen(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            if (screen === 'pos') {
+                document.getElementById('screen-pos').classList.add('active');
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            } else if (screen === 'pickup') {
+                document.getElementById('screen-pickup').classList.add('active');
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                loadOrdersFromDB();
+            } else if (screen === 'history') {
+                document.getElementById('screen-history').classList.add('active');
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+                loadOrdersFromDB();
+            }
+        }
+
+        setInterval(() => {
+            if (document.getElementById('screen-pickup').classList.contains('active') || document.getElementById('screen-history').classList.contains('active')) {
+                loadOrdersFromDB();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>
