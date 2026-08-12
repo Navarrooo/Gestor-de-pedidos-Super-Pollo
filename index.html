@@ -177,8 +177,8 @@
                 <button class="btn-product" onclick="selectPollo('Cuarto Pollo', 4.90)">¼ Pollo <span class="price">4.90 €</span></button>
                 <button class="btn-product" onclick="addItem('Medio Pollo', 8.00)">½ Pollo <span class="price">8.00 €</span></button>
                 <button class="btn-product" onclick="selectPollo('Pollo A\'Last', 13.90)">Pollo A'Last <span class="price">13.90 €</span></button>
-                <button class="btn-product" onclick="addItem('Lechona con Patatas', 14.90)">Lechona con Patatas <span class="price">14.90 €</span></button>
-                <button class="btn-product" onclick="addItem('Paletilla de Cordero', 29.00)">Paletilla de Cordero <span class="price">29.00 €</span></button>
+                <button class="btn-product" onclick="selectAsado('Lechona con Patatas', 14.90)">Lechona con Patatas <span class="price">14.90 €</span></button>
+                <button class="btn-product" onclick="selectAsado('Paletilla de Cordero', 29.00)">Paletilla de Cordero <span class="price">29.00 €</span></button>
                 <button class="btn-product" onclick="openFixedOptionsModal('Lasaña', [{'label':'½ Ración', 'price':4.90}, {'label':'1 Ración', 'price':8.90}])">Lasaña <span class="price">4.90 € / 8.90 €</span></button>
                 <button class="btn-product" onclick="openFixedOptionsModal('Canelones Pollo', [{'label':'3 Uds', 'price':6.50}, {'label':'6 Uds', 'price':10.50}])">Canelones Pollo <span class="price">6.50 € / 10.50 €</span></button>
                 <button class="btn-product" onclick="addItem('Canelones Espinacas', 5.90)">Canelones Espinacas <span class="price">5.90 €</span></button>
@@ -297,6 +297,18 @@
         </div>
     </div>
 
+    <div id="modalTypePatatasAsado" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-title" id="asadoModalTitle">Tipo de Patatas</div>
+        <div class="modal-options">
+            <button class="btn-option" onclick="finalizeAsado('Patatas Normales')">Patatas Normales</button>
+            <button class="btn-option" onclick="finalizeAsado('Patatas Aliñadas')">Patatas Aliñadas</button>
+            <button class="btn-option" onclick="finalizeAsado('Patatas Mixtas')">Patatas Mixtas</button>
+        </div>
+        <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+    </div>
+</div>
+    
     <div id="modalMenuIndividual" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-title">¿Convertir en Menú Individual? (7.40 €)</div>
@@ -524,6 +536,21 @@
         let selectedPotatoSizeTemp = '';
         let selectedPotatoPriceTemp = 0;
         let editingOrderId = null;
+
+        let selectedAsadoName = '';
+        let selectedAsadoPrice = 0;
+
+        function selectAsado(name, price) {
+            selectedAsadoName = name;
+            selectedAsadoPrice = price;
+            document.getElementById('asadoModalTitle').innerText = `${name} - Tipo de Patatas`;
+            document.getElementById('modalTypePatatasAsado').classList.add('active');
+        }
+
+        function finalizeAsado(potatoType) {
+            closeModals();
+            addItem(`${selectedAsadoName} (${potatoType})`, selectedAsadoPrice);
+        }
 
         function closeModals() {
             document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
