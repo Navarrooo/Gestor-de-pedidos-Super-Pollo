@@ -310,16 +310,19 @@
 </div>
     
     <div id="modalMenuIndividual" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-title">¿Convertir en Menú Individual? (7.40 €)</div>
-            <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 1.05rem;">Incluye: Cuarto de Pollo + Patatas (Normales, Aliñadas o Mixtas).</p>
-            <div class="modal-options">
-                <button class="btn-option" style="background:#27ae60; color:white; border:none;" onclick="confirmMenuIndividual()">Sí, añadir Menú Individual</button>
-                <button class="btn-option" onclick="confirmPolloSolo('¼ Pollo', 4.90)">No, solo ¼ Pollo (4.90 €)</button>
-            </div>
-            <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
+    <div class="modal-box">
+        <div class="modal-title">Menú Individual (7.40 €) - Elige el Plato</div>
+        <div class="modal-options">
+            <button class="btn-option" onclick="selectMenuIndividualPlato('¼ Pollo')">¼ Pollo</button>
+            <button class="btn-option" onclick="selectMenuIndividualPlato('Croquetas Pollo')">Croquetas Pollo</button>
+            <button class="btn-option" onclick="selectMenuIndividualPlato('Croquetas Espinacas')">Croquetas Espinacas</button>
+            <button class="btn-option" onclick="selectMenuIndividualPlato('San Jacobo')">San Jacobo</button>
+            <button class="btn-option" onclick="selectMenuIndividualPlato('Pechuga de Pollo')">Pechuga de Pollo</button>
+            <button class="btn-option" onclick="selectMenuIndividualPlato('Nuggets')">Nuggets</button>
         </div>
+        <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
     </div>
+</div>
 
     <div id="modalTypePatatasMenuFamiliar" class="modal-overlay">
         <div class="modal-box">
@@ -622,13 +625,21 @@
             document.getElementById('modalTypePatatasMenuIndividual').classList.add('active');
         }
 
+        let selectedMenuIndivPlato = '';
+
         function triggerMenuIndividual() {
+            document.getElementById('modalMenuIndividual').classList.add('active');
+        }
+
+        function selectMenuIndividualPlato(plato) {
+            selectedMenuIndivPlato = plato;
+            closeModals();
             document.getElementById('modalTypePatatasMenuIndividual').classList.add('active');
         }
 
         function finalizeMenuIndividual(potatoType) {
             closeModals();
-            addItem(`MENÚ INDIVIDUAL (¼ Pollo + Patatas ${potatoType})`, 7.40);
+            addItem(`MENÚ INDIVIDUAL (${selectedMenuIndivPlato} + Patatas ${potatoType})`, 7.40);
         }
 
         function openPotatoModal() {
