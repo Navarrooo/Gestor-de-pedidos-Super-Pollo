@@ -140,6 +140,24 @@
         .summary-item:last-child { border-bottom: none; }
         .summary-qty { font-weight: bold; color: #d35400; font-size: 1.15rem; }
         .summary-total-highlight { background: #d4edda; color: #155724; font-weight: bold; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 1.15rem; }
+
+        /* Marco y tarjeta para pedidos que deben estar listos a la llegada */
+        .card-order.pre-prep {
+            border: 3px solid #2980b9 !important;
+            border-left: 8px solid #3498db !important;
+            background-color: #f0f7fc;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+        .pre-prep-badge {
+            background: #2980b9;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -253,6 +271,10 @@
             <input type="date" id="customDatePicker" class="date-picker" onchange="initTimeSelector()">
 
             <select id="pickupTime" class="time-select"></select>
+            <label style="display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 1.05rem; font-weight: bold; color: #2c3e50; cursor: pointer; background: #eef7fc; padding: 10px; border-radius: 8px; border: 1px solid #bdc3c7;">
+                <input type="checkbox" id="prePrepCheck" style="width: 22px; height: 22px; cursor: pointer;">
+                🛍️ Tener preparado a la llegada
+            </label>
 
             <button class="btn-submit" id="btnSubmitOrder" onclick="saveOrderToDB()">GUARDAR Y AGENDAR</button>
         </div>
@@ -568,6 +590,7 @@
                 document.getElementById('ticketTitle').innerText = "Comanda Actual";
                 document.getElementById('btnSubmitOrder').innerText = "GUARDAR Y AGENDAR";
                 document.getElementById('customerName').value = '';
+                document.getElementById('prePrepCheck').checked = false;
                 renderOrder();
             }
         }
@@ -920,6 +943,9 @@
             const dateMode = document.getElementById('pickupDateMode').value;
             const customDate = document.getElementById('customDatePicker').value;
 
+            // Dentro de saveOrderToDB():
+            const prePrep = document.getElementById('prePrepCheck').checked;
+
             if (currentOrder.length === 0) return alert("Añade al menos un producto.");
             if (!nameInput) return alert("Introduce el nombre del cliente o un identificador.");
 
@@ -937,6 +963,7 @@
                 items: currentOrder,
                 totalPrice: totalPrice,
                 status: 'pending'
+                prePrep: prePrep
             };
 
             const tx = db.transaction("orders", "readwrite");
@@ -956,6 +983,7 @@
                 document.getElementById('btnSubmitOrder').innerText = "GUARDAR Y AGENDAR";
                 document.getElementById('customerName').value = '';
                 document.getElementById('pickupDateMode').value = 'today';
+                document.getElementById('prePrepCheck').checked = false;
                 toggleDatePicker();
                 renderOrder();
                 loadOrdersFromDB();
@@ -974,6 +1002,7 @@
                 editingOrderId = order.id;
                 currentOrder = order.items;
                 document.getElementById('customerName').value = order.customer;
+                document.getElementById('prePrepCheck').checked = !!order.prePrep;
 
                 const todayStr = new Date().toISOString().split('T')[0];
                 if (order.pickupDate === todayStr) {
@@ -1073,6 +1102,7 @@
                     if (order.status === 'delivered') {
                         if (esCoincidenciaFlexible(order.customer, searchHistoryRaw)) {
                             const card = document.createElement('div');
+                            const prePrepClass = order.prePrep ? 'pre-prep' : '';
                             card.className = 'card-order history';
                             card.innerHTML = `
                                 <div>
@@ -1104,12 +1134,14 @@
                                 const orderPickupMinutes = pHours * 60 + pMins;
                                 if (currentMinutes - orderPickupMinutes >= 30) isDelayed = true;
                             }
-
+                            
+                            const prePrepClass = order.prePrep ? 'pre-prep' : '';
                             const card = document.createElement('div');
-                            card.className = `card-order ${order.status === 'completed' ? 'ready' : ''} ${isDelayed ? 'delayed' : ''}`;
+                            card.className = `card-order ${order.status === 'completed' ? 'ready' : ''} ${isDelayed ? 'delayed' : ''} ${prePrepClass}`;
 
                             card.innerHTML = `
                                 <div>
+                                    ${order.prePrep ? '<div class="pre-prep-badge">🛍️ TENER PREPARADO A LA LLEGADA</div>' : ''}
                                     <div class="card-header">
                                         <span>${order.customer}</span>
                                         <span class="card-date">${dynamicDateLabel}</span>
