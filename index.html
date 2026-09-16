@@ -219,6 +219,7 @@
                 <button class="btn-product" onclick="addItem('Pechuga de Pollo', 3.20)">Pechuga de Pollo <span class="price">3.20 €</span></button>
                 <button class="btn-product" onclick="addItem('Filete de Merluza', 3.50)">Filete de Merluza <span class="price">3.50 €</span></button>
                 <button class="btn-product" onclick="openUnitsModal('Pimientos al Horno', 1.00, 3.50)">Pimientos al Horno <span class="price">1.00 €/u (4u: 3.50€)</span></button>
+                <button class="btn-product" onclick="addItem('Tarta de Queso', 5.50)">Tarta de Queso <span class="price">5.50 €</span></button>
             </div>
 
             <div class="category-title">Extras</div>
@@ -1137,14 +1138,16 @@
             };
         }
 
-        /* RESUMEN DE COMIDA CON DESGROSE DE POLLOS ENTEROS, MEDIOS, CUARTOS Y TOTAL ACUMULADO */
+        /* RESUMEN DE COMIDA CON DESGROSE DE POLLOS ENTEROS, MEDIOS, CUARTOS Y TOTAL ACUMULADO (FILTRADO SOLO AL DÍA ACTUAL) */
         function showFoodSummaryModal() {
             if (!db) return;
             const tx = db.transaction("orders", "readonly");
             const req = tx.objectStore("orders").getAll();
 
             req.onsuccess = () => {
-                const orders = req.result.filter(o => o.status !== 'delivered');
+                const todayStr = new Date().toISOString().split('T')[0];
+                // Se filtran los pedidos para incluir SOLO los del día de hoy no entregados
+                const orders = req.result.filter(o => o.status !== 'delivered' && o.pickupDate === todayStr);
                 
                 // Contadores de Pollos
                 let pollosEnteros = 0;
@@ -1240,6 +1243,9 @@
                 const container = document.getElementById('summaryContent');
                 container.innerHTML = '';
 
+                // Indicador visual de que es el resumen de hoy
+                container.innerHTML += `<div style="text-align:center; font-weight:bold; color:#2980b9; margin-bottom:10px;">📅 Resumen correspondiente al día de hoy (${todayStr})</div>`;
+
                 // Bloque 1: Pollos con desglose completo y total equivalente
                 container.innerHTML += `
                     <div class="summary-section">
@@ -1305,7 +1311,7 @@
                 // Bloque 6: Otras comidas agrupadas
                 let restHtml = `<div class="summary-section"><div class="summary-section-title">📋 OTRAS COMIDAS (Agrupadas por tipo)</div>`;
                 if (sortedRest.length === 0) {
-                    restHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:5px;">No hay otros platos registrados.</div>`;
+                    restHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:5px;">No hay otros platos registrados para hoy.</div>`;
                 } else {
                     sortedRest.forEach(item => {
                         restHtml += `
