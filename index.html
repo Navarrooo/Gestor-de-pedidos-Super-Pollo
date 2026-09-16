@@ -618,9 +618,8 @@
         function selectPollo(type, price) {
             if (type === 'Pollo A\'Last') {
                 document.getElementById('modalMenuFamiliar').classList.add('active');
-            } else if (type === '¼ Pollo') {
-                document.getElementById('modalMenuIndividual').classList.add('active');
             } else {
+                // ¼ Pollo y Medio Pollo se añaden directamente a su precio suelto
                 addItem(type, price);
             }
         }
@@ -652,6 +651,7 @@
         let selectedMenuIndivPlato = '';
 
         function triggerMenuIndividual() {
+            selectedMenuIndivPlato = ''; // Limpiar selección previa
             document.getElementById('modalMenuIndividual').classList.add('active');
         }
 
