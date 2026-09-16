@@ -1204,7 +1204,7 @@
                         // 1. Pollos (Enteros, Medios, Cuartos)
                         if (nameLower.includes("menú familiar") || nameLower.includes("menu familiar")) {
                             pollosEnteros += qty;
-                        } else if (nameLower.includes("menú individual") || nameLower.includes("menu individual") && nameLower.includes("pollo")) {
+                        } else if ((nameLower.includes("menú individual") || nameLower.includes("menu individual")) && nameLower.includes("pollo")) {
                             cuartosPollo += qty;
                         } else if (nameLower.includes("pollo a'last") || nameLower.includes("pollo alast")) {
                             pollosEnteros += qty;
