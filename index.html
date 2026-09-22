@@ -1246,9 +1246,10 @@
                         const nameLower = item.name.toLowerCase();
                         const qty = item.qty;
         
-                        // FILTRO: Ignorar patatas en el apartado "Otras Comidas"
+                        // Filtro para ignorar patatas en "Otras Comidas"
                         const isPotato = nameLower.includes("patata") || nameLower.includes("patatas");
         
+                        // 1. Pollos
                         if (nameLower.includes("menú familiar") || nameLower.includes("menu familiar")) {
                             pollosEnteros += qty;
                         } else if ((nameLower.includes("menú individual") || nameLower.includes("menu individual")) && nameLower.includes("pollo")) {
@@ -1259,13 +1260,19 @@
                             mediosPollo += qty;
                         } else if (nameLower.includes("¼ pollo") || nameLower.includes("cuarto pollo")) {
                             cuartosPollo += qty;
-                        } else if (nameLower.includes("pan normal")) {
+                        } 
+                        // 2. Panes
+                        else if (nameLower.includes("pan normal")) {
                             panNormal += qty;
                         } else if (nameLower.includes("pan rústico") || nameLower.includes("pan rustico")) {
                             panRustico += qty;
-                        } else if (nameLower.includes("lechona")) {
+                        } 
+                        // 3. Lechona
+                        else if (nameLower.includes("lechona")) {
                             lechonaRaciones += qty;
-                        } else if (nameLower.includes("paella")) {
+                        }
+                        // 4. Paella
+                        else if (nameLower.includes("paella")) {
                             const encargoMatch = item.name.match(/por encargo\s*\((\d+)\s*pax\)/i);
                             const gramsMatch = item.name.match(/(\d+)\s*g/i);
                             if (encargoMatch) paellaData.paxEncargo += parseInt(encargoMatch[1]) * qty;
@@ -1274,14 +1281,18 @@
                                 if (!paellaData.bandejas[item.name]) paellaData.bandejas[item.name] = 0;
                                 paellaData.bandejas[item.name] += qty;
                             }
-                        } else if (nameLower.includes("fideuá") || nameLower.includes("fideua")) {
+                        } 
+                        // 5. Fideuá
+                        else if (nameLower.includes("fideuá") || nameLower.includes("fideua")) {
                             const gramsMatch = item.name.match(/(\d+)\s*g/i);
                             if (gramsMatch) fideuaData.totalGramos += parseInt(gramsMatch[1]) * qty;
                             else {
                                 if (!fideuaData.bandejas[item.name]) fideuaData.bandejas[item.name] = 0;
                                 fideuaData.bandejas[item.name] += qty;
                             }
-                        } else if (!isPotato) {
+                        } 
+                        // 6. Resto de comidas (excluyendo patatas)
+                        else if (!isPotato) {
                             if (!restFoodGrouped[item.name]) {
                                 restFoodGrouped[item.name] = { totalQty: 0, subitems: [] };
                             }
@@ -1324,7 +1335,49 @@
                         <div class="summary-item"><span>Raciones / Unidades:</span><span class="summary-qty">${lechonaRaciones} ud</span></div>
                     </div>`;
         
-                // Bloque 3: Otras Comidas con Desplegable por Cliente
+                // Bloque 3: Paella
+                let paellaHtml = `<div class="summary-section"><div class="summary-section-title">🥘 PAELLA</div>`;
+                let paellaHasData = false;
+                if (paellaData.paxEncargo > 0) {
+                    paellaHtml += `<div class="summary-item"><span>Por Encargo Total:</span><span class="summary-qty">${paellaData.paxEncargo} Pax</span></div>`;
+                    paellaHasData = true;
+                }
+                if (paellaData.totalGramos > 0) {
+                    paellaHtml += `<div class="summary-item"><span>Al Peso Total:</span><span class="summary-qty">${(paellaData.totalGramos / 1000).toFixed(2)} kg (${paellaData.totalGramos}g)</span></div>`;
+                    paellaHasData = true;
+                }
+                Object.keys(paellaData.bandejas).forEach(bName => {
+                    paellaHtml += `<div class="summary-item"><span>${bName}:</span><span class="summary-qty">${paellaData.bandejas[bName]} ud</span></div>`;
+                    paellaHasData = true;
+                });
+                if (!paellaHasData) paellaHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:3px;">Sin encargos hoy.</div>`;
+                paellaHtml += `</div>`;
+                container.innerHTML += paellaHtml;
+        
+                // Bloque 4: Fideuá
+                let fideuaHtml = `<div class="summary-section"><div class="summary-section-title">🍲 FIDEUÁ</div>`;
+                let fideuaHasData = false;
+                if (fideuaData.totalGramos > 0) {
+                    fideuaHtml += `<div class="summary-item"><span>Al Peso Total:</span><span class="summary-qty">${(fideuaData.totalGramos / 1000).toFixed(2)} kg (${fideuaData.totalGramos}g)</span></div>`;
+                    fideuaHasData = true;
+                }
+                Object.keys(fideuaData.bandejas).forEach(bName => {
+                    fideuaHtml += `<div class="summary-item"><span>${bName}:</span><span class="summary-qty">${fideuaData.bandejas[bName]} ud</span></div>`;
+                    fideuaHasData = true;
+                });
+                if (!fideuaHasData) fideuaHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:3px;">Sin encargos hoy.</div>`;
+                fideuaHtml += `</div>`;
+                container.innerHTML += fideuaHtml;
+        
+                // Bloque 5: Panes
+                container.innerHTML += `
+                    <div class="summary-section">
+                        <div class="summary-section-title">🥖 PANES</div>
+                        <div class="summary-item"><span>Pan Normal:</span><span class="summary-qty">${panNormal} ud</span></div>
+                        <div class="summary-item"><span>Pan Rústico:</span><span class="summary-qty">${panRustico} ud</span></div>
+                    </div>`;
+        
+                // Bloque 6: Otras Comidas con Desplegable por Cliente
                 let restHtml = `<div class="summary-section"><div class="summary-section-title">📋 OTRAS COMIDAS (Sin patatas)</div>`;
                 const keys = Object.keys(restFoodGrouped).sort();
         
