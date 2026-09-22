@@ -1234,10 +1234,11 @@
                 let cuartosPollo = 0;
                 let panNormal = 0;
                 let panRustico = 0;
-                let lechonaRaciones = 0;
                 
-                const paellaData = { paxEncargo: 0, totalGramos: 0, bandejas: {} };
-                const fideuaData = { totalGramos: 0, bandejas: {} };
+                // Estructuras agrupadas
+                const lechonaGrouped = { totalQty: 0, subitems: [] };
+                const paellaData = { paxEncargo: 0, totalGramos: 0, bandejas: {}, subitems: [] };
+                const fideuaData = { totalGramos: 0, bandejas: {}, subitems: [] };
         
                 const restFoodGrouped = {};
         
@@ -1269,27 +1270,61 @@
                         } 
                         // 3. Lechona
                         else if (nameLower.includes("lechona")) {
-                            lechonaRaciones += qty;
+                            lechonaGrouped.totalQty += qty;
+                            lechonaGrouped.subitems.push({
+                                orderId: order.id,
+                                itemIndex: itemIdx,
+                                customer: order.customer,
+                                pickupTime: order.pickupTime,
+                                qty: qty,
+                                prepared: !!item.prepared,
+                                name: item.name
+                            });
                         }
-                        // 4. Paella
+                        // 4. Paella (Contador de bandejas + encargo + manuales)
                         else if (nameLower.includes("paella")) {
                             const encargoMatch = item.name.match(/por encargo\s*\((\d+)\s*pax\)/i);
-                            const gramsMatch = item.name.match(/(\d+)\s*g/i);
-                            if (encargoMatch) paellaData.paxEncargo += parseInt(encargoMatch[1]) * qty;
-                            else if (gramsMatch) paellaData.totalGramos += parseInt(gramsMatch[1]) * qty;
-                            else {
+                            const gramsManualMatch = item.name.match(/\((\d+)\s*g\)/i); // Solo g directos sin nombre de bandeja
+                            
+                            if (encargoMatch) {
+                                paellaData.paxEncargo += parseInt(encargoMatch[1]) * qty;
+                            } else if (gramsManualMatch) {
+                                paellaData.totalGramos += parseInt(gramsManualMatch[1]) * qty;
+                            } else {
                                 if (!paellaData.bandejas[item.name]) paellaData.bandejas[item.name] = 0;
                                 paellaData.bandejas[item.name] += qty;
                             }
+        
+                            paellaData.subitems.push({
+                                orderId: order.id,
+                                itemIndex: itemIdx,
+                                customer: order.customer,
+                                pickupTime: order.pickupTime,
+                                qty: qty,
+                                prepared: !!item.prepared,
+                                name: item.name
+                            });
                         } 
-                        // 5. Fideuá
+                        // 5. Fideuá (Contador de bandejas + manuales)
                         else if (nameLower.includes("fideuá") || nameLower.includes("fideua")) {
-                            const gramsMatch = item.name.match(/(\d+)\s*g/i);
-                            if (gramsMatch) fideuaData.totalGramos += parseInt(gramsMatch[1]) * qty;
-                            else {
+                            const gramsManualMatch = item.name.match(/\((\d+)\s*g\)/i); // Solo g directos
+                            
+                            if (gramsManualMatch) {
+                                fideuaData.totalGramos += parseInt(gramsManualMatch[1]) * qty;
+                            } else {
                                 if (!fideuaData.bandejas[item.name]) fideuaData.bandejas[item.name] = 0;
                                 fideuaData.bandejas[item.name] += qty;
                             }
+        
+                            fideuaData.subitems.push({
+                                orderId: order.id,
+                                itemIndex: itemIdx,
+                                customer: order.customer,
+                                pickupTime: order.pickupTime,
+                                qty: qty,
+                                prepared: !!item.prepared,
+                                name: item.name
+                            });
                         } 
                         // 6. Resto de comidas (excluyendo patatas)
                         else if (!isPotato) {
@@ -1328,45 +1363,109 @@
                         </div>
                     </div>`;
         
-                // Bloque 2: Lechona
-                container.innerHTML += `
+                // Bloque 2: Lechona (Desplegable)
+                let lechonaPrepCount = lechonaGrouped.subitems.filter(s => s.prepared).length;
+                let lechonaHtml = `
                     <div class="summary-section">
                         <div class="summary-section-title">🐖 LECHONA</div>
-                        <div class="summary-item"><span>Raciones / Unidades:</span><span class="summary-qty">${lechonaRaciones} ud</span></div>
-                    </div>`;
+                        <div class="summary-item"><span>Raciones / Unidades:</span><span class="summary-qty">${lechonaGrouped.totalQty} ud</span></div>
+                        <div class="summary-item" style="cursor:pointer; background:#eef7fc; padding:8px; border-radius:6px; margin-top:6px;" onclick="document.getElementById('subgroup-lechona').style.display = document.getElementById('subgroup-lechona').style.display === 'none' ? 'block' : 'none'">
+                            <span><strong>Desglose Pedidos Lechona</strong> <small style="color:#7f8c8d;">(${lechonaPrepCount}/${lechonaGrouped.subitems.length} listos)</small></span>
+                            <span class="summary-qty">▼</span>
+                        </div>
+                        <div id="subgroup-lechona" style="display:none; padding-left:10px; margin-top:4px;">`;
+                if (lechonaGrouped.subitems.length === 0) {
+                    lechonaHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:3px;">Sin encargos hoy.</div>`;
+                } else {
+                    lechonaGrouped.subitems.forEach(sub => {
+                        lechonaHtml += `
+                            <div class="summary-subitem">
+                                <span>🕒 <strong>${sub.pickupTime}</strong> - ${sub.customer} (${sub.name})</span>
+                                <button class="btn-prep-toggle ${sub.prepared ? 'done' : ''}" onclick="toggleItemPrepared(${sub.orderId}, ${sub.itemIndex})">
+                                    ${sub.prepared ? '✓ PREPARADO' : 'Marcar Preparado'}
+                                </button>
+                            </div>`;
+                    });
+                }
+                lechonaHtml += `</div></div>`;
+                container.innerHTML += lechonaHtml;
         
-                // Bloque 3: Paella
-                let paellaHtml = `<div class="summary-section"><div class="summary-section-title">🥘 PAELLA</div>`;
+                // Bloque 3: Paella (Unidades por tipo de bandeja + Encargos + Desplegable)
+                let paellaPrepCount = paellaData.subitems.filter(s => s.prepared).length;
+                let paellaHtml = `
+                    <div class="summary-section">
+                        <div class="summary-section-title">🥘 PAELLA</div>`;
+                
                 let paellaHasData = false;
                 if (paellaData.paxEncargo > 0) {
                     paellaHtml += `<div class="summary-item"><span>Por Encargo Total:</span><span class="summary-qty">${paellaData.paxEncargo} Pax</span></div>`;
                     paellaHasData = true;
                 }
-                if (paellaData.totalGramos > 0) {
-                    paellaHtml += `<div class="summary-item"><span>Al Peso Total:</span><span class="summary-qty">${(paellaData.totalGramos / 1000).toFixed(2)} kg (${paellaData.totalGramos}g)</span></div>`;
-                    paellaHasData = true;
-                }
+                // Mostrar bandejas por tipo (Ej: Paella Al Peso (Segunda): 4 ud)
                 Object.keys(paellaData.bandejas).forEach(bName => {
                     paellaHtml += `<div class="summary-item"><span>${bName}:</span><span class="summary-qty">${paellaData.bandejas[bName]} ud</span></div>`;
                     paellaHasData = true;
                 });
+                if (paellaData.totalGramos > 0) {
+                    paellaHtml += `<div class="summary-item"><span>Otras raciones manuales:</span><span class="summary-qty">${(paellaData.totalGramos / 1000).toFixed(2)} kg</span></div>`;
+                    paellaHasData = true;
+                }
                 if (!paellaHasData) paellaHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:3px;">Sin encargos hoy.</div>`;
-                paellaHtml += `</div>`;
+        
+                paellaHtml += `
+                        <div class="summary-item" style="cursor:pointer; background:#eef7fc; padding:8px; border-radius:6px; margin-top:6px;" onclick="document.getElementById('subgroup-paella').style.display = document.getElementById('subgroup-paella').style.display === 'none' ? 'block' : 'none'">
+                            <span><strong>Desglose Pedidos Paella</strong> <small style="color:#7f8c8d;">(${paellaPrepCount}/${paellaData.subitems.length} listos)</small></span>
+                            <span class="summary-qty">▼</span>
+                        </div>
+                        <div id="subgroup-paella" style="display:none; padding-left:10px; margin-top:4px;">`;
+                
+                paellaData.subitems.forEach(sub => {
+                    paellaHtml += `
+                        <div class="summary-subitem">
+                            <span>🕒 <strong>${sub.pickupTime}</strong> - ${sub.customer} (${sub.name})</span>
+                            <button class="btn-prep-toggle ${sub.prepared ? 'done' : ''}" onclick="toggleItemPrepared(${sub.orderId}, ${sub.itemIndex})">
+                                ${sub.prepared ? '✓ PREPARADO' : 'Marcar Preparado'}
+                            </button>
+                        </div>`;
+                });
+                paellaHtml += `</div></div>`;
                 container.innerHTML += paellaHtml;
         
-                // Bloque 4: Fideuá
-                let fideuaHtml = `<div class="summary-section"><div class="summary-section-title">🍲 FIDEUÁ</div>`;
+                // Bloque 4: Fideuá (Unidades por tipo de bandeja + Desplegable)
+                let fideuaPrepCount = fideuaData.subitems.filter(s => s.prepared).length;
+                let fideuaHtml = `
+                    <div class="summary-section">
+                        <div class="summary-section-title">🍲 FIDEUÁ</div>`;
+                
                 let fideuaHasData = false;
-                if (fideuaData.totalGramos > 0) {
-                    fideuaHtml += `<div class="summary-item"><span>Al Peso Total:</span><span class="summary-qty">${(fideuaData.totalGramos / 1000).toFixed(2)} kg (${fideuaData.totalGramos}g)</span></div>`;
-                    fideuaHasData = true;
-                }
+                // Mostrar bandejas por tipo (Ej: Fideuá (Segunda - 650g): 2 ud)
                 Object.keys(fideuaData.bandejas).forEach(bName => {
                     fideuaHtml += `<div class="summary-item"><span>${bName}:</span><span class="summary-qty">${fideuaData.bandejas[bName]} ud</span></div>`;
                     fideuaHasData = true;
                 });
+                if (fideuaData.totalGramos > 0) {
+                    fideuaHtml += `<div class="summary-item"><span>Otras raciones manuales:</span><span class="summary-qty">${(fideuaData.totalGramos / 1000).toFixed(2)} kg</span></div>`;
+                    fideuaHasData = true;
+                }
                 if (!fideuaHasData) fideuaHtml += `<div style="color:#777; font-size:0.95rem; text-align:center; padding:3px;">Sin encargos hoy.</div>`;
-                fideuaHtml += `</div>`;
+        
+                fideuaHtml += `
+                        <div class="summary-item" style="cursor:pointer; background:#eef7fc; padding:8px; border-radius:6px; margin-top:6px;" onclick="document.getElementById('subgroup-fideua').style.display = document.getElementById('subgroup-fideua').style.display === 'none' ? 'block' : 'none'">
+                            <span><strong>Desglose Pedidos Fideuá</strong> <small style="color:#7f8c8d;">(${fideuaPrepCount}/${fideuaData.subitems.length} listos)</small></span>
+                            <span class="summary-qty">▼</span>
+                        </div>
+                        <div id="subgroup-fideua" style="display:none; padding-left:10px; margin-top:4px;">`;
+                
+                fideuaData.subitems.forEach(sub => {
+                    fideuaHtml += `
+                        <div class="summary-subitem">
+                            <span>🕒 <strong>${sub.pickupTime}</strong> - ${sub.customer} (${sub.name})</span>
+                            <button class="btn-prep-toggle ${sub.prepared ? 'done' : ''}" onclick="toggleItemPrepared(${sub.orderId}, ${sub.itemIndex})">
+                                ${sub.prepared ? '✓ PREPARADO' : 'Marcar Preparado'}
+                            </button>
+                        </div>`;
+                });
+                fideuaHtml += `</div></div>`;
                 container.innerHTML += fideuaHtml;
         
                 // Bloque 5: Panes
