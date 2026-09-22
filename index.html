@@ -1249,10 +1249,13 @@
                         }
                         // 6. Resto de comidas
                         else {
-                            if (!restFood[item.name]) {
-                                restFood[item.name] = 0;
+                            // Si contiene "patata", no lo añade a "Otras Comidas"
+                            if (!nameLower.includes("patata") && !nameLower.includes("patatas")) {
+                                if (!restFood[item.name]) {
+                                    restFood[item.name] = 0;
+                                }
+                                restFood[item.name] += qty;
                             }
-                            restFood[item.name] += qty;
                         }
                     });
                 });
