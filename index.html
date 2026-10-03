@@ -226,7 +226,7 @@
             <div class="grid">
                 <button class="btn-product" onclick="selectPollo('Cuarto Pollo', 4.90)">¼ Pollo <span class="price">4.90 €</span></button>
                 <button class="btn-product" onclick="addItem('Medio Pollo', 8.00)">½ Pollo <span class="price">8.00 €</span></button>
-                <button class="btn-product" onclick="selectPollo('Pollo A\'Last', 13.90)">Pollo A'Last <span class="price">13.90 €</span></button>
+                <button class="btn-product" onclick="selectPollo('Pollo A'Last', 13.90)">Pollo A'Last <span class="price">13.90 €</span></button>
                 <button class="btn-product" onclick="selectAsado('Lechona con Patatas', 14.90)">Lechona con Patatas <span class="price">14.90 €</span></button>
                 <button class="btn-product" onclick="selectAsado('Paletilla de Cordero', 29.00)">Paletilla de Cordero <span class="price">29.00 €</span></button>
                 <button class="btn-product" onclick="openFixedOptionsModal('Lasaña', [{'label':'½ Ración', 'price':4.90}, {'label':'1 Ración', 'price':8.90}])">Lasaña <span class="price">4.90 € / 8.90 €</span></button>
@@ -254,6 +254,7 @@
                 <button class="btn-product" onclick="openComidaModal('Frito Marisco', 23.00)">Frito Marisco <span class="price">23.00 €/kg</span></button>
                 <button class="btn-product" onclick="openComidaModal('Pica Pica de Pulpo', 25.00)">Pica Pica Pulpo <span class="price">25.00 €/kg</span></button>
                 <button class="btn-product" onclick="openComidaModal('Sepia con Cebolla', 20.00)">Sepia con Cebolla <span class="price">20.00 €/kg</span></button>
+                <button class="btn-product" onclick="openFixedOptionsModal('Caracoles', [{'label':'Medio Bote', 'price':7.00}, {'label':'Bote Entero', 'price':11.00}])">Caracoles <span class="price">7.00 € / 11.00 €</span></button>
                 <button class="btn-product" onclick="openComidaModal('Patatas Horno', 9.00)">Patatas Horno <span class="price">9.00 €/kg</span></button>
                 <button class="btn-product" style="border-color: #e67e22;" onclick="openPotatoModal()">Patatas Fritas <span class="price">Desde 4.00 €</span></button>
             </div>
@@ -325,7 +326,7 @@
     <div id="screen-history" class="screen">
         <div class="search-container">
             <input type="text" id="searchHistory" class="search-input" placeholder="🔍 Buscar cliente en Histórico..." oninput="loadOrdersFromDB()">
-            <button class="btn-purge" onclick="purgeAllData()">⚠️ Borrar Todo</button>
+            <button class="btn-purge" onclick="purgeAllData()">⚠️ Vaciar Histórico</button>
         </div>
         <div class="pickup-grid" id="historyGrid"></div>
     </div>
@@ -346,7 +347,7 @@
             <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 1.05rem;">Incluye: 1 Pollo + Patatas Medianas + Alioli + Salsa de pollo.</p>
             <div class="modal-options">
                 <button class="btn-option" style="background:#27ae60; color:white; border:none;" onclick="confirmMenuFamiliar()">Sí, añadir Menú Familiar</button>
-                <button class="btn-option" onclick="confirmPolloSolo('Pollo A\'Last', 13.90)">No, solo Pollo A'Last (13.90 €)</button>
+                <button class="btn-option" onclick="confirmPolloSolo('Pollo A'Last', 13.90)">No, solo Pollo A'Last (13.90 €)</button>
             </div>
             <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
         </div>
@@ -470,7 +471,7 @@
         function normalizePhonetic(text) {
             if (!text) return "";
             return text.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .normalize("NFD").replace(/[̀-ͯ]/g, "")
                 .replace(/qu/g, "k")
                 .replace(/c/g, "k")
                 .replace(/z/g, "s")
@@ -478,7 +479,7 @@
                 .replace(/y/g, "i")
                 .replace(/v/g, "b")
                 .replace(/h/g, "")
-                .replace(/(.)\1+/g, "$1")
+                .replace(/(.)+/g, "$1")
                 .trim();
         }
 
@@ -628,27 +629,31 @@
         }
 
         function purgeAllData() {
-            if (confirm("⚠️ ¿ATENCIÓN: Quieres borrar TODOS los pedidos (Recogida e Histórico)?")) {
-                if (confirm("Esta acción eliminará completamente la base de datos de pedidos y no se podrá deshacer. ¿Continuar?")) {
+            if (confirm("⚠️ ¿Deseas vaciar el Histórico de pedidos entregados?")) {
+                if (confirm("Esta acción eliminará todos los pedidos entregados del histórico. Los pedidos pendientes de Recogida NO se borrarán. ¿Continuar?")) {
                     const tx = db.transaction("orders", "readwrite");
                     const store = tx.objectStore("orders");
-                    store.clear();
+                    const req = store.getAll();
+
+                    req.onsuccess = () => {
+                        const orders = req.result;
+                        orders.forEach(order => {
+                            if (order.status === 'delivered') {
+                                store.delete(order.id);
+                            }
+                        });
+                    };
+
                     tx.oncomplete = () => {
-                        currentOrder = [];
-                        editingOrderId = null;
-                        document.getElementById('ticketTitle').innerText = "Comanda Actual";
-                        document.getElementById('btnSubmitOrder').innerText = "GUARDAR Y AGENDAR";
-                        document.getElementById('customerName').value = '';
-                        renderOrder();
                         loadOrdersFromDB();
-                        alert("Todos los pedidos han sido eliminados correctamente.");
+                        alert("Histórico vaciado correctamente.");
                     };
                 }
             }
         }
 
         function selectPollo(type, price) {
-            if (type === 'Pollo A\'Last') {
+            if (type === 'Pollo A'Last') {
                 document.getElementById('modalMenuFamiliar').classList.add('active');
             } else {
                 addItem(type, price);
@@ -958,9 +963,9 @@
                         <span class="edit-hint">⚖️ Toca para recalcular peso/importe</span>
                     </div>
                     <div style="white-space:nowrap; display:flex; align-items:center; gap:8px;">
-                        <button class="btn-qty" onclick="updateQty('${item.name.replace(/'/g, "\\'")}', -1)">-</button>
+                        <button class="btn-qty" onclick="updateQty('${item.name.replace(/'/g, "\'")}', -1)">-</button>
                         <span style="font-weight:bold; font-size:1.2rem; min-width:24px; text-align:center;">${item.qty}</span>
-                        <button class="btn-qty" onclick="updateQty('${item.name.replace(/'/g, "\\'")}', 1)">+</button>
+                        <button class="btn-qty" onclick="updateQty('${item.name.replace(/'/g, "\'")}', 1)">+</button>
                     </div>`;
                 listEl.appendChild(li);
             });
@@ -1052,15 +1057,17 @@
         }
 
         function markAsDelivered(id) {
-            const tx = db.transaction("orders", "readwrite");
-            const store = tx.objectStore("orders");
-            const req = store.get(id);
-            req.onsuccess = () => {
-                const data = req.result;
-                data.status = 'delivered';
-                store.put(data);
-            };
-            tx.oncomplete = () => loadOrdersFromDB();
+            if (confirm("¿Confirmas que este pedido ha sido entregado al cliente?")) {
+                const tx = db.transaction("orders", "readwrite");
+                const store = tx.objectStore("orders");
+                const req = store.get(id);
+                req.onsuccess = () => {
+                    const data = req.result;
+                    data.status = 'delivered';
+                    store.put(data);
+                };
+                tx.oncomplete = () => loadOrdersFromDB();
+            }
         }
 
         function deleteHistoryOrder(id) {
