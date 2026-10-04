@@ -338,6 +338,18 @@
         </div>
     </div>
 
+    <!-- MODAL CONFIRMACIÓN ENTREGADO -->
+    <div id="modalConfirmDeliver" class="modal-overlay">
+        <div class="modal-box" style="text-align: center;">
+            <div class="modal-title" style="margin-bottom: 10px;">📦 Confirmar Entrega</div>
+            <p id="deliverModalText" style="font-size: 1.15rem; color: #34495e; margin-bottom: 20px;">¿Confirmas que este pedido ha sido entregado al cliente?</p>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-secondary" style="margin-top: 0; background: #7f8c8d;" onclick="closeModals()">Cancelar</button>
+                <button class="btn-option" style="background: #e67e22; color: white; border: none; justify-content: center; flex: 1; padding: 16px;" onclick="confirmDeliverAction()">Sí, Entregado</button>
+            </div>
+        </div>
+    </div>
+
     <!-- OTROS MODALES TÁCTILES -->
     <div id="modalMenuFamiliar" class="modal-overlay">
         <div class="modal-box">
@@ -469,7 +481,7 @@
         function normalizePhonetic(text) {
             if (!text) return "";
             return text.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .normalize("NFD").replace(/[̀-ͯ]/g, "")
                 .replace(/qu/g, "k")
                 .replace(/c/g, "k")
                 .replace(/z/g, "s")
@@ -477,7 +489,7 @@
                 .replace(/y/g, "i")
                 .replace(/v/g, "b")
                 .replace(/h/g, "")
-                .replace(/(.)\1+/g, "$1")
+                .replace(/(.)+/g, "$1")
                 .trim();
         }
 
@@ -592,6 +604,7 @@
         let selectedPotatoSizeTemp = '';
         let selectedPotatoPriceTemp = 0;
         let editingOrderId = null;
+        let pendingDeliverOrderId = null;
 
         let selectedAsadoName = '';
         let selectedAsadoPrice = 0;
@@ -1055,17 +1068,34 @@
         }
 
         function markAsDelivered(id) {
-            if (confirm("¿Confirmas que este pedido ha sido entregado al cliente?")) {
-                const tx = db.transaction("orders", "readwrite");
-                const store = tx.objectStore("orders");
-                const req = store.get(id);
-                req.onsuccess = () => {
-                    const data = req.result;
+            pendingDeliverOrderId = id;
+            const tx = db.transaction("orders", "readonly");
+            const req = tx.objectStore("orders").get(id);
+            req.onsuccess = () => {
+                const data = req.result;
+                const customerName = data ? data.customer : '';
+                document.getElementById('deliverModalText').innerText = `¿Confirmas que el pedido de "${customerName}" ha sido entregado?`;
+                document.getElementById('modalConfirmDeliver').classList.add('active');
+            };
+        }
+
+        function confirmDeliverAction() {
+            if (!pendingDeliverOrderId) return;
+            const tx = db.transaction("orders", "readwrite");
+            const store = tx.objectStore("orders");
+            const req = store.get(pendingDeliverOrderId);
+            req.onsuccess = () => {
+                const data = req.result;
+                if (data) {
                     data.status = 'delivered';
                     store.put(data);
-                };
-                tx.oncomplete = () => loadOrdersFromDB();
-            }
+                }
+            };
+            tx.oncomplete = () => {
+                pendingDeliverOrderId = null;
+                closeModals();
+                loadOrdersFromDB();
+            };
         }
 
         function deleteHistoryOrder(id) {
