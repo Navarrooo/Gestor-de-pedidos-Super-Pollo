@@ -8,10 +8,12 @@
         * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; }
         body { background-color: #f4f4f9; height: 100vh; display: flex; flex-direction: column; }
 
-        /* Solución táctil específica para iPad / Safari */
-        button, .btn-product, .btn-card, .btn-option, .order-item-info {
+        /* Solución táctil nativa para iPad / Safari */
+        button, .btn-product, .btn-card, .btn-option, .order-item-info, .tab-btn {
             cursor: pointer !important;
             -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+            -webkit-touch-callout: none;
+            user-select: none;
             touch-action: manipulation;
         }
 
@@ -28,7 +30,7 @@
         .nav-logo { display: flex; justify-content: center; align-items: center; }
         .nav-logo img { max-height: 50px; width: auto; object-fit: contain; }
         .nav-tabs { display: flex; gap: 10px; justify-self: end; align-items: center; }
-        .tab-btn { background: #34495e; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.05rem; touch-action: manipulation; }
+        .tab-btn { background: #34495e; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.05rem; }
         .tab-btn.active { background: #27ae60; }
 
         .screen { display: none; padding: 15px; height: calc(100vh - 71px); }
@@ -44,7 +46,7 @@
             background-color: #fff; border: 2px solid #e0e0e0; border-radius: 10px; padding: 14px 10px;
             font-size: 1.05rem; font-weight: 600; color: #2c3e50; cursor: pointer;
             display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-            min-height: 95px; touch-action: manipulation;
+            min-height: 95px;
         }
         .btn-product .price { font-size: 0.95rem; color: #27ae60; font-weight: bold; margin-top: 6px; }
         .btn-product:active { transform: scale(0.96); background-color: #e8f4fd; }
@@ -52,7 +54,7 @@
         /* Panel Comanda */
         .ticket { flex: 1.1; background: #fff; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.08); }
         .ticket-header { font-size: 1.25rem; font-weight: bold; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-clear { background: #e74c3c; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer; touch-action: manipulation; }
+        .btn-clear { background: #e74c3c; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer; }
         .btn-clear:active { background: #c0392b; }
 
         .order-list { flex: 1; overflow-y: auto; list-style: none; margin-bottom: 10px; }
@@ -61,12 +63,11 @@
         .order-item-info:hover { background: #f0f4f8; }
         .edit-hint { font-size: 0.8rem; color: #2980b9; font-weight: bold; display: inline-block; margin-top: 2px; }
         
-        .btn-qty { background: #e0e0e0; border: none; width: 46px; height: 46px; border-radius: 8px; font-weight: bold; font-size: 1.4rem; cursor: pointer; color: #2c3e50; touch-action: manipulation; }
+        .btn-qty { background: #e0e0e0; border: none; width: 46px; height: 46px; border-radius: 8px; font-weight: bold; font-size: 1.4rem; cursor: pointer; color: #2c3e50; }
         .btn-qty:active { background: #bbb; }
 
         .customer-input, .date-select, .search-input, .date-picker { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 1.1rem; margin-bottom: 10px; background: #fff; }
         
-        /* Selector de hora maximizado para tablets */
         .time-select { 
             width: 100%; 
             height: 54px; 
@@ -91,7 +92,7 @@
 
         .ticket-total { font-size: 1.35rem; font-weight: bold; color: #2c3e50; margin: 10px 0; display: flex; justify-content: space-between; border-top: 2px solid #eee; padding-top: 8px; }
 
-        .btn-submit { background-color: #27ae60; color: white; border: none; width: 100%; padding: 18px; font-size: 1.3rem; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 5px; touch-action: manipulation; }
+        .btn-submit { background-color: #27ae60; color: white; border: none; width: 100%; padding: 18px; font-size: 1.3rem; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 5px; }
 
         /* Pantalla Recogida e Histórico */
         #screen-pickup, #screen-history { width: 100%; flex-direction: column; gap: 15px; overflow-y: auto; }
@@ -110,16 +111,15 @@
         .card-items { list-style: none; margin: 12px 0; border-top: 1px solid #eee; padding-top: 8px; }
         .card-items li { font-size: 1.1rem; padding: 4px 0; }
         
-        /* Botones de tarjetas aumentados */
         .card-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-        .btn-card { flex: 1; padding: 14px 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; touch-action: manipulation; }
+        .btn-card { flex: 1; padding: 14px 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; }
         .btn-ready { background: #27ae60; color: white; }
         .btn-edit { background: #2980b9; color: white; }
         .btn-delete { background: #e67e22; color: white; }
         .btn-permanent-delete { background: #c0392b; color: white; }
         .btn-restore { background: #8e44ad; color: white; }
-        .btn-purge { background: #c0392b; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; white-space: nowrap; touch-action: manipulation; }
-        .btn-summary { background: #8e44ad; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; white-space: nowrap; touch-action: manipulation; }
+        .btn-purge { background: #c0392b; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; white-space: nowrap; }
+        .btn-summary { background: #8e44ad; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; white-space: nowrap; }
         .btn-summary:active, .btn-purge:active { opacity: 0.8; }
 
         /* MODALES TÁCTILES */
@@ -129,9 +129,9 @@
         .modal-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 16px; text-align: center; color: #2c3e50; }
         .modal-options { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
         .grid-qty { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .btn-option { background: #f8f9fa; border: 2px solid #007bff; color: #007bff; padding: 16px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; text-align: center; display: flex; justify-content: space-between; align-items: center; touch-action: manipulation; }
+        .btn-option { background: #f8f9fa; border: 2px solid #007bff; color: #007bff; padding: 16px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; text-align: center; display: flex; justify-content: space-between; align-items: center; }
         .btn-option:active { background: #007bff; color: white; }
-        .btn-secondary { background: #6c757d; border: none; color: white; padding: 16px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; margin-top: 14px; width: 100%; cursor: pointer; touch-action: manipulation; }
+        .btn-secondary { background: #6c757d; border: none; color: white; padding: 16px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; margin-top: 14px; width: 100%; cursor: pointer; }
 
         /* Estilos del resumen de comida */
         .summary-section { margin-bottom: 14px; background: #f8f9fa; border-radius: 8px; padding: 12px; border: 1px solid #e9ecef; }
@@ -141,7 +141,6 @@
         .summary-qty { font-weight: bold; color: #d35400; font-size: 1.15rem; }
         .summary-total-highlight { background: #d4edda; color: #155724; font-weight: bold; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 1.15rem; }
 
-        /* Marco y tarjeta para pedidos que deben estar listos a la llegada */
         .card-order.pre-prep {
             border: 3px solid #2980b9 !important;
             border-left: 8px solid #3498db !important;
@@ -159,7 +158,6 @@
             margin-bottom: 8px;
         }
 
-        /* Estilos para productos preparados/racionados */
         .item-prepared {
             color: #27ae60 !important;
             font-weight: bold;
@@ -226,7 +224,7 @@
             <div class="grid">
                 <button class="btn-product" onclick="selectPollo('Cuarto Pollo', 4.90)">¼ Pollo <span class="price">4.90 €</span></button>
                 <button class="btn-product" onclick="addItem('Medio Pollo', 8.00)">½ Pollo <span class="price">8.00 €</span></button>
-                <button class="btn-product" onclick="selectPollo('Pollo A'Last', 13.90)">Pollo A'Last <span class="price">13.90 €</span></button>
+                <button class="btn-product" onclick="selectPollo(&quot;Pollo A'Last&quot;, 13.90)">Pollo A'Last <span class="price">13.90 €</span></button>
                 <button class="btn-product" onclick="selectAsado('Lechona con Patatas', 14.90)">Lechona con Patatas <span class="price">14.90 €</span></button>
                 <button class="btn-product" onclick="selectAsado('Paletilla de Cordero', 29.00)">Paletilla de Cordero <span class="price">29.00 €</span></button>
                 <button class="btn-product" onclick="openFixedOptionsModal('Lasaña', [{'label':'½ Ración', 'price':4.90}, {'label':'1 Ración', 'price':8.90}])">Lasaña <span class="price">4.90 € / 8.90 €</span></button>
@@ -347,7 +345,7 @@
             <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 1.05rem;">Incluye: 1 Pollo + Patatas Medianas + Alioli + Salsa de pollo.</p>
             <div class="modal-options">
                 <button class="btn-option" style="background:#27ae60; color:white; border:none;" onclick="confirmMenuFamiliar()">Sí, añadir Menú Familiar</button>
-                <button class="btn-option" onclick="confirmPolloSolo('Pollo A'Last', 13.90)">No, solo Pollo A'Last (13.90 €)</button>
+                <button class="btn-option" onclick="confirmPolloSolo(&quot;Pollo A'Last&quot;, 13.90)">No, solo Pollo A'Last (13.90 €)</button>
             </div>
             <button class="btn-secondary" onclick="closeModals()">Cancelar / Salir</button>
         </div>
@@ -471,7 +469,7 @@
         function normalizePhonetic(text) {
             if (!text) return "";
             return text.toLowerCase()
-                .normalize("NFD").replace(/[̀-ͯ]/g, "")
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                 .replace(/qu/g, "k")
                 .replace(/c/g, "k")
                 .replace(/z/g, "s")
@@ -483,7 +481,6 @@
                 .trim();
         }
 
-        /* ALGORITMO LEVENSHTEIN Y BÚSQUEDA FLEXIBLE PARA DETECTAR ERRORES EN NOMBRES */
         function levenshteinDistance(a, b) {
             const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
             for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
@@ -653,7 +650,7 @@
         }
 
         function selectPollo(type, price) {
-            if (type === 'Pollo A'Last') {
+            if (type === "Pollo A'Last") {
                 document.getElementById('modalMenuFamiliar').classList.add('active');
             } else {
                 addItem(type, price);
@@ -899,11 +896,12 @@
             renderOrder();
         }
 
-        function updateQty(name, delta) {
-            const item = currentOrder.find(i => i.name === name);
-            if (item) {
-                item.qty += delta;
-                if (item.qty <= 0) { currentOrder = currentOrder.filter(i => i.name !== name); }
+        function updateQtyByIndex(index, delta) {
+            if (currentOrder[index]) {
+                currentOrder[index].qty += delta;
+                if (currentOrder[index].qty <= 0) {
+                    currentOrder.splice(index, 1);
+                }
             }
             renderOrder();
         }
@@ -963,9 +961,9 @@
                         <span class="edit-hint">⚖️ Toca para recalcular peso/importe</span>
                     </div>
                     <div style="white-space:nowrap; display:flex; align-items:center; gap:8px;">
-                        <button class="btn-qty" onclick="updateQty('${item.name.replace(/'/g, "\'")}', -1)">-</button>
+                        <button class="btn-qty" onclick="updateQtyByIndex(${index}, -1)">-</button>
                         <span style="font-weight:bold; font-size:1.2rem; min-width:24px; text-align:center;">${item.qty}</span>
-                        <button class="btn-qty" onclick="updateQty('${item.name.replace(/'/g, "\'")}', 1)">+</button>
+                        <button class="btn-qty" onclick="updateQtyByIndex(${index}, 1)">+</button>
                     </div>`;
                 listEl.appendChild(li);
             });
@@ -1242,7 +1240,6 @@
                 let panNormal = 0;
                 let panRustico = 0;
                 
-                // Estructuras agrupadas
                 const lechonaGrouped = { totalQty: 0, subitems: [] };
                 const paellaData = { paxEncargo: 0, totalGramos: 0, bandejas: {}, subitems: [] };
                 const fideuaData = { totalGramos: 0, bandejas: {}, subitems: [] };
@@ -1254,10 +1251,8 @@
                         const nameLower = item.name.toLowerCase();
                         const qty = item.qty;
         
-                        // Filtro para ignorar patatas en "Otras Comidas"
                         const isPotato = nameLower.includes("patata") || nameLower.includes("patatas");
         
-                        // 1. Pollos
                         if (nameLower.includes("menú familiar") || nameLower.includes("menu familiar")) {
                             pollosEnteros += qty;
                         } else if ((nameLower.includes("menú individual") || nameLower.includes("menu individual")) && nameLower.includes("pollo")) {
@@ -1269,13 +1264,11 @@
                         } else if (nameLower.includes("¼ pollo") || nameLower.includes("cuarto pollo")) {
                             cuartosPollo += qty;
                         } 
-                        // 2. Panes
                         else if (nameLower.includes("pan normal")) {
                             panNormal += qty;
                         } else if (nameLower.includes("pan rústico") || nameLower.includes("pan rustico")) {
                             panRustico += qty;
                         } 
-                        // 3. Lechona
                         else if (nameLower.includes("lechona")) {
                             lechonaGrouped.totalQty += qty;
                             lechonaGrouped.subitems.push({
@@ -1288,10 +1281,9 @@
                                 name: item.name
                             });
                         }
-                        // 4. Paella (Contador de bandejas + encargo + manuales)
                         else if (nameLower.includes("paella")) {
                             const encargoMatch = item.name.match(/por encargo\s*\((\d+)\s*pax\)/i);
-                            const gramsManualMatch = item.name.match(/\((\d+)\s*g\)/i); // Solo g directos sin nombre de bandeja
+                            const gramsManualMatch = item.name.match(/\((\d+)\s*g\)/i);
                             
                             if (encargoMatch) {
                                 paellaData.paxEncargo += parseInt(encargoMatch[1]) * qty;
@@ -1312,9 +1304,8 @@
                                 name: item.name
                             });
                         } 
-                        // 5. Fideuá (Contador de bandejas + manuales)
                         else if (nameLower.includes("fideuá") || nameLower.includes("fideua")) {
-                            const gramsManualMatch = item.name.match(/\((\d+)\s*g\)/i); // Solo g directos
+                            const gramsManualMatch = item.name.match(/\((\d+)\s*g\)/i);
                             
                             if (gramsManualMatch) {
                                 fideuaData.totalGramos += parseInt(gramsManualMatch[1]) * qty;
@@ -1333,7 +1324,6 @@
                                 name: item.name
                             });
                         } 
-                        // 6. Resto de comidas (excluyendo patatas)
                         else if (!isPotato) {
                             if (!restFoodGrouped[item.name]) {
                                 restFoodGrouped[item.name] = { totalQty: 0, subitems: [] };
@@ -1357,7 +1347,6 @@
         
                 container.innerHTML += `<div style="text-align:center; font-weight:bold; color:#2980b9; margin-bottom:10px;">📅 Resumen correspondiente al día de hoy (${todayStr})</div>`;
         
-                // Bloque 1: Pollos
                 container.innerHTML += `
                     <div class="summary-section">
                         <div class="summary-section-title">🍗 POLLOS TOTALES</div>
@@ -1370,7 +1359,6 @@
                         </div>
                     </div>`;
         
-                // Bloque 2: Lechona (Desplegable)
                 let lechonaPrepCount = lechonaGrouped.subitems.filter(s => s.prepared).length;
                 let lechonaHtml = `
                     <div class="summary-section">
@@ -1397,7 +1385,6 @@
                 lechonaHtml += `</div></div>`;
                 container.innerHTML += lechonaHtml;
         
-                // Bloque 3: Paella (Unidades por tipo de bandeja + Encargos + Desplegable)
                 let paellaPrepCount = paellaData.subitems.filter(s => s.prepared).length;
                 let paellaHtml = `
                     <div class="summary-section">
@@ -1408,7 +1395,6 @@
                     paellaHtml += `<div class="summary-item"><span>Por Encargo Total:</span><span class="summary-qty">${paellaData.paxEncargo} Pax</span></div>`;
                     paellaHasData = true;
                 }
-                // Mostrar bandejas por tipo (Ej: Paella Al Peso (Segunda): 4 ud)
                 Object.keys(paellaData.bandejas).forEach(bName => {
                     paellaHtml += `<div class="summary-item"><span>${bName}:</span><span class="summary-qty">${paellaData.bandejas[bName]} ud</span></div>`;
                     paellaHasData = true;
@@ -1438,14 +1424,12 @@
                 paellaHtml += `</div></div>`;
                 container.innerHTML += paellaHtml;
         
-                // Bloque 4: Fideuá (Unidades por tipo de bandeja + Desplegable)
                 let fideuaPrepCount = fideuaData.subitems.filter(s => s.prepared).length;
                 let fideuaHtml = `
                     <div class="summary-section">
                         <div class="summary-section-title">🍲 FIDEUÁ</div>`;
                 
                 let fideuaHasData = false;
-                // Mostrar bandejas por tipo (Ej: Fideuá (Segunda - 650g): 2 ud)
                 Object.keys(fideuaData.bandejas).forEach(bName => {
                     fideuaHtml += `<div class="summary-item"><span>${bName}:</span><span class="summary-qty">${fideuaData.bandejas[bName]} ud</span></div>`;
                     fideuaHasData = true;
@@ -1475,7 +1459,6 @@
                 fideuaHtml += `</div></div>`;
                 container.innerHTML += fideuaHtml;
         
-                // Bloque 5: Panes
                 container.innerHTML += `
                     <div class="summary-section">
                         <div class="summary-section-title">🥖 PANES</div>
@@ -1483,7 +1466,6 @@
                         <div class="summary-item"><span>Pan Rústico:</span><span class="summary-qty">${panRustico} ud</span></div>
                     </div>`;
         
-                // Bloque 6: Otras Comidas con Desplegable por Cliente
                 let restHtml = `<div class="summary-section"><div class="summary-section-title">📋 OTRAS COMIDAS (Sin patatas)</div>`;
                 const keys = Object.keys(restFoodGrouped).sort();
         
@@ -1559,18 +1541,6 @@
                 loadOrdersFromDB();
             }
         }, 60000);
-
-        /* SCRIPT ADICIONAL DE OPTIMIZACIÓN TÁCTIL PARA IPAD (SAFARI/WEBKIT) */
-        document.addEventListener("DOMContentLoaded", function () {
-            const clickableSelector = "button, .btn-product, .btn-card, .btn-option, .order-item-info, .tab-btn";
-            
-            document.body.addEventListener("touchend", function (e) {
-                const target = e.target.closest(clickableSelector);
-                if (target && !target.disabled) {
-                    target.setAttribute("role", "button");
-                }
-            }, { passive: true });
-        });
     </script>
 </body>
 </html>
